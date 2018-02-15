@@ -51,3 +51,11 @@ deploy:
   on:
     repo: DRMacIver/research-notebook
   skip_cleanup: true
+
+
+notifications:
+  email:
+    recipients:
+      - david@drmaciver.com
+    on_success: never
+    on_failure: change
