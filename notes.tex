@@ -211,6 +211,28 @@ you can automatically calculate a Boltzmann sampler for it using symbolic linear
 The similarity of this paper to~\cite{DBLP:journals/dam/FlajoletGT92} is probably not accidental given that they have an author in common---both
 are about using generating functions of regular languages to simplify some natural probabilistic problem through semi-automatic constructions.
 
+\section{Fault Independence}
+
+A nice set of papers starting from ``An Experimental Evaluation of the Assumption of Independence in Multiversion Programming''~\cite{DBLP:journals/tse/KnightL86}.
+
+Key ideas:
+
+\begin{itemize}
+\item We want to see if multiple independent implementations of the same spec tend to fail in the same way.
+\item Get a number of different people to implement the spec.
+\item Then feed their implementations a million random inputs designed to look like a ``realistic workload'' and see if the inputs on which they fail are statistically independent.
+\end{itemize}
+
+Spoiler alert: They're not.
+
+I haven't read the paper in detail yet,
+but I \emph{have} read ``A reply to the criticisms of the Knight \& Leveson experiment''\cite{knight1990reply} which as well as being an intersting summary of the results is an absolutely glorious takedown.
+
+As well as really liking the empiricism of this work,
+one reason I'm interested in it is that a lot of the testing literature's focus on differential testing should be considered to have a fairly big hole down the middle as a result of this work---if everyone is making the same mistakes,
+then differential testing won't pick this up,
+and if mistakes are non-independent then the probability of this happening may be much larger than expected.
+
 \section{References}
 
 \bibliography{references}{}
