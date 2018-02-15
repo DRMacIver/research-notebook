@@ -105,8 +105,8 @@ because \(f(0) = t \in \mathcal{L}\) and \(f(n) = s_n \in \mathcal{L}\) is the v
 which was wrong.
 This means that if \(i\) is our change point as above,
 the transition we took from \(s_i \to s_{i + 1}\) was incorrect,
-and \(t_{i + 2} \ldots \t_n\) witnesses this fact,
-so this is what we add to \mathcal{E}.
+and \(t_{i + 2} \ldots t_n\) witnesses this fact,
+so this is what we add to \(\mathcal{E}\).
 
 In contrast,
 Angluin's original algorithm tries to maintain \(\mathcal{E}\) as suffix-closed,
@@ -144,6 +144,37 @@ but more importantly ``Birthday Paradox, Coupon Collectors, Caching Algorithms a
 It takes the observation that this and many similar problems can be framed in terms of regular languages,
 and that by using standard constructions of generating functions for regular languages,
 you can more or less automate the calculation of their expected value (for values of ``automate'' that include calculating some potentially nasty integrals).
+
+\section{Sandsifter}
+
+Sandsifter~\cite{sandsifter} is a really neat trick that tries to find interesting hidden behaviour on x86 by just executing all the instructions and seeing what happens
+(for values of ``seeing what happens'' that includes e.g.\ differential testing).
+This seems infeasible:
+Instructions may be up to 15 bytes long and there's no way to just try all \(256^{15} \approx 10^{36}\) such byte strings.
+
+But it turns out that it's not!
+The reason is that although they may be that long,
+the instruction set is \emph{prefix-free}---no
+instruction is a prefix of another.
+
+This means that the following algorithm enumerates the entire instruction set:
+
+\begin{enumerate}
+\item Start from an all-zero buffer of 15 bytes.
+\item Repeatedly execute the current buffer and see how many bytes are consumed.
+\item Zero everything after the last byte read and increment the last byte read (handling overflow by setting it to zero and incrementing the previous one)
+\item Stop when we have executed an instruction where every executed byte was 255.
+\end{enumerate}
+
+Because even though \emph{some} instructions are 15 bytes long \emph{most} aren't,
+and in fact there turn out to be only about \(100,000,000\) instructions.
+
+The only problem that remains is how to determine how many bytes were read given an x86 instruction.
+This isn't something that the CPU tells you.
+The answer is really neat:
+Put the instruction right before a page boundary and watch to see if you trigger a fault when executing it!
+If you do, then the instruction tried to read off the end of the page.
+By sliding the position of the instruction around you can then find the smallest prefix that does not trigger a page fault.
 
 \section{References}
 
