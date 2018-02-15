@@ -1,0 +1,19 @@
+language: python
+
+addons:
+  apt:
+    packages:
+    - texlive-full
+    - rubber
+
+script:
+  - rubber -d notes.tex
+
+before_deploy:
+  - python scripts/date-tag.py
+
+deploy:
+  provider: releases
+  api_key: "GITHUB OAUTH TOKEN"
+  file: "notes.pdf"
+  skip_cleanup: true
