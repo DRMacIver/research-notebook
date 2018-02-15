@@ -1,0 +1,156 @@
+\documentclass[a4paper]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{listings}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\title{Research Notebook}
+\author{David R. MacIver}
+
+\begin{document}
+
+\maketitle
+
+This is mostly a collection of research level material I am intersted in.
+It's something like a lab book,
+something like a collection of papers I find interesting and want to make sure I remember and/or understand.
+
+It is likely to be terribly organised,
+sorry.
+
+\section{Inference of Finite Automata}
+
+The paper I learned the most about this subject from was Rivest and Schapire's ``Inference of Finite Automata Using Homing Sequences''~\cite{DBLP:journals/iandc/RivestS93,}.
+This builds on Dana Angluin's classic L* search from ``Learning Regular Sets from Queries and Counterexamples''~\cite{DBLP:journals/iandc/Angluin87},
+but extends it in several ways.
+
+One very important feature of this paper which seems to be widely missed among people using L* search is that it significantly improves the algorithmic complexity of the number of queries that need to be performed.
+
+Given some unknown language \(\mathcal{L}\) over an alphabet \(\mathcal{A}\),
+L* search tries to find a deterministic finite automaton (DFA) representing that language given two oracles:
+The first is a query oracle,
+which allows you to test whether any string is in the language or not,
+and the second is a counter-example oracle which allows you to test whether a given DFA is correct,
+and if not presents a string for which it gives an incorrect answer.
+
+It does this by constructing a deterministic finite automaton whose states are uniquely labelled by strings in some prefix-closed set \(S\),
+and whose transitions are determined by some set of experiments \(E\).
+Given a state \(s\) and a character \(c\),
+the constructed automaton has a transition \(s \to t\) with \(c\) if \(sce \in \mathcal{L} \iff te \in \mathcal{L}\).
+This works because of the following observations:
+
+\begin{itemize}
+\item Given \emph{any} deterministic finite automaton,
+states can be uniquely labeled by a string that reaches that state from the origin.
+By constructing these labels iteratively we can ensure that the set of labels used is prefix closed.
+\item If two strings lead to the same state,
+then any extension of them by the same string must also lead to the same state.
+\item The same state cannot both be accepting and non-accepting.
+\end{itemize}
+
+Thus the experiments serve as a way of ``distinguishing'' two states:
+If we ever observe that \(se \in \mathcal{L} \neq s'e \in \mathcal{L}\) then these can't lead to equivalent states.
+
+This is the idea of the Myhill-Nerode theorem~\cite{nerode1958linear}\footnote{Confession:
+I have not read the cited paper,
+only the wikipedia page about it.
+}.
+
+L* search is essentially a way of learning the Myhill-Nerode automaton that results.
+It proceeds in two parts:
+The first tries to expand \(S\),
+the second to expand \(E\).
+
+Given a fixed set of experiments we first \emph{complete} the automaton:
+For each \(s \in S\) and each \(c \in \mathcal{A}\) it tries to find a state in \(S\) that the current set of experiments thinks is equivalent to \(sc\).
+If it finds one (and it cannot find more than one,
+because we make sure to only enlarge \(S\) by adding inequivalent states to it),
+we add a transition to that state.
+If not,
+we add \(sc\) to \(S\).
+
+Once this is done,
+we have an automaton that we hope matches \(\mathcal{L}\),
+and we ask our counter-example oracle whether we're right.
+If not,
+we get a string which it gives the correct answer for.
+
+This is where Angluin's original approach differs from Rivest and Schapire's.
+Their observation builds on the surprisingly powerful idea that binary search has nothing to do with ordered sequences,
+but is instead just about finding some point at which a function changes.\ 
+i.e.\ if \(f(0) \neq f(n)\),
+binary search finds some \(0 \leq i < n\) such that \(f(i) \neq f(i + 1)\).
+If \(t\) is our counter-example then we can then use this to construct a new experiment to add to \(\mathcal{E}\) in \(O(\log(n))\) steps,
+where \(n = |t|\).
+We do this by taking \(f(i) = s_i t_{i+1} \ldots t_{n} \in \mathcal{L}\),
+where \(t = t_1 \ldots t_n\) and \(s_i\) is the element of \(\mathcal{S}\) that labels the state that we are in after transitioning from the origin through
+\(t_1, \ldots, t_i\).
+We know that \(f(0) \neq f(n)\),
+because \(f(0) = t \in \mathcal{L}\) and \(f(n) = s_n \in \mathcal{L}\) is the value that our automaton predicted for \(t \in \mathcal{L}\),
+which was wrong.
+This means that if \(i\) is our change point as above,
+the transition we took from \(s_i \to s_{i + 1}\) was incorrect,
+and \(t_{i + 2} \ldots \t_n\) witnesses this fact,
+so this is what we add to \mathcal{E}.
+
+In contrast,
+Angluin's original algorithm tries to maintain \(\mathcal{E}\) as suffix-closed,
+and as a result produces a much larger experiment set in a larger number of queries.
+
+There is a lot of other information in this paper I need to go back and process at some point.
+I should also write up its diversity based representation,
+as I think it's a nice framing of this.
+
+\section{DFA Minimization}
+
+``Fast brief practical DFA minimization''~\cite{DBLP:journals/ipl/Valmari12} is a really nice paper about this,
+although the experience of reading code golfed C++ to fit in a two column format wasn't a huge amount of fun.
+
+It makes use of partition refinement,
+applied to not just the states but the transitions,
+beginning with a very coarse paritition that treats everything as equivalent and then progressively refining the partition whenever it finds an inconsistency.
+
+One thing I thought was interesting about it is the core algorithm \emph{looks} like one you should have to iterate to a fixed point,
+but actually it completes in a single run.
+
+\section{Coupon Collecting and Sundry}
+
+I've become interested in the non-uniform coupon collector problem recently,
+which takes the following form:
+
+Given \(X\) taking values in \(\{1, \ldots, n\}\) with \(P(X = i) = p_i > 0\),
+if we have infinitely many independent copies \(X_i\) of \(X\),
+and \(T = \min\limits_k |\{X_1, \ldots, X_k\}| = n\) (i.e. \(T\) is the first point we have seen every value at least once)
+what is \(E(T)\)?
+
+I proved some interesting lower bounds on this in terms of expectation that I haven't seen elsewhere but are probably not novel (I may add them in here later),
+but more importantly ``Birthday Paradox, Coupon Collectors, Caching Algorithms and Self-Organizing Search''~\cite{DBLP:journals/dam/FlajoletGT92} is a really nice paper about this.
+
+It takes the observation that this and many similar problems can be framed in terms of regular languages,
+and that by using standard constructions of generating functions for regular languages,
+you can more or less automate the calculation of their expected value (for values of ``automate'' that include calculating some potentially nasty integrals).
+
+\section{Miscellanea}
+
+
+\section{References}
+
+\bibliography{references}{}
+\bibliographystyle{acm}
+
+\end{document}
