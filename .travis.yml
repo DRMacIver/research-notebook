@@ -11,6 +11,7 @@ addons:
     - texlive-math-extra
     - latex-xcolor
     - texlive-pictures
+    - pgf
     - rubber
 
 script:
