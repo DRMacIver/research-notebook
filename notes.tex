@@ -22,6 +22,9 @@
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
 
 \newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{theorem}{Theorem}
 
 \title{Research Notebook}
 \author{David R. MacIver}
@@ -148,6 +151,89 @@ but more importantly ``Birthday Paradox, Coupon Collectors, Caching Algorithms a
 It takes the observation that this and many similar problems can be framed in terms of regular languages,
 and that by using standard constructions of generating functions for regular languages,
 you can more or less automate the calculation of their expected value (for values of ``automate'' that include calculating some potentially nasty integrals).
+
+Here is an interesting family of lower bounds on \(E(S)\) that doesn't easily follow from these results:
+
+\begin{lemma}
+If \(p = P(X \geq m)\) then \(E(T) \geq \frac{n - m + 1}{p}\).
+\end{lemma}
+
+\begin{proof}
+Let \(L_0 = 0\) and \(L_{i + 1}\) be the first time after \(L_i\) that \(X_{T_{i + 1}} \geq m\).
+
+\(X_i \geq n\) if and only if \(i = L_j\) for some \(j\).
+Thus \(S \geq T_{n - m + 1}\),
+as in order to have covered every value \(\{1, \ldots n\}\) we must in particular have coverd every value \(\{m, \ldots, n\}\).
+
+\(T_{i + 1} - T_i\) is geometrically distributed with parameter \(p\), so has expected value \(\frac{1}{p}\).
+Thus \(E(T_i) = \frac{i}{p}\),
+and so \(E(S) \geq \frac{n - m + 1}{p}\).
+\end{proof}
+
+\begin{corollary}
+For any strictly increasing function \(f\) and \(1 \leq m \leq n\)
+\(E(S) \geq \frac{f(m) (n - m + 1)}{E(f(X))}\).
+\end{corollary}
+
+\begin{proof}
+This follows straightforwardly from the standard result that \(P(X \geq m) \leq \frac{E(f(X))}{f(m)}\) and the previous lemma.
+\end{proof}
+
+\begin{theorem}
+\(E(S) \geq \frac{2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - e (k + 1) {(n + 1)}^{k - 1}}{E(X^k)}\)
+\end{theorem}
+
+\begin{proof}
+Let \(f(x) = x^k\) in the above corollary.
+
+Now, define \(g(x) = (n - x + 1) x^k\).
+We'd like to find \(m \in \{1, \ldots, m\}\) that maximises \(g(m)\) to get the largest lower bound on \(E(S)\).
+
+\begin{align*}
+g'(x) &= (n - x + 1) k x^{k - 1} - x^k\\
+&= (n + 1) k x^{k - 1} - (k + 1) x^k\\
+&= \left( (n + 1) k - (k + 1) x \right) x^{k - 1}\\
+&= \left( (n + 1) \frac{k}{k + 1} - x \right)(k + 1) x^{k - 1}\\
+\end{align*}
+
+So \(g'(x) = 0\) when \(x = x_{\max} = \frac{k}{k + 1} (n + 1)\).
+
+Unfortunately we can't just plug in \(x_{\max}\),
+because it might not be integral.
+But we can find an integer \(1 \leq i_{\max} \leq n\) with \(|x_{\max} - i| \leq 1\).
+\(|g'(y)| \leq (k + 1){(1 + x_{\max})}^{k - 1}\) for \(y\) between \(x_{\max}\) and \(i_{\max}\),
+so
+
+\(g(i_{\max}) \geq (n - x_{\max} + 1)x_{\max}^{k} - (k + 1){(1 + x_{\max})}^{k - 1}\)
+
+\begin{align*}
+(n - x_{\max} + 1)x_{\max}^{k} &= \frac{n + 1}{k + 1} {(n + 1)}^k {(1 + k^{-1})}^k\\
+&= {(k + 1)}^{-1} {(n + 1)}^{k + 1} {(1 + k^{-1})}^k\\
+&\geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} \\
+\end{align*}
+
+Where the latter bound comes from the fact that \(x \to {(1 + x^{-1})}^x\) is monotonic increasing.
+
+\begin{align*}
+{(1 + x_{\max})}^{k - 1} &= {(n + 1)}^{k - 1} {(1 + k^{-1})}^k \\
+&\leq e {(n + 1)}^{k - 1}\\ 
+\end{align*}
+
+Thus we have \(g(i_{\max}) \geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - (k + 1) e {(n + 1)}^{k - 1}\).
+Plugging this in to the results of the previous corollary,
+this gives us the desired result.
+
+\end{proof}
+
+\begin{corollary}
+If \(X\) comes from some family of distributions such that \(E(X^k)\) is bounded as \(n\) varies,
+then \(E(S) \geq O(n^{k + 1})\).
+\end{corollary}
+
+This bound is not quite tight,
+and is missing a logarithmic factor.
+A more involved calculation could ``easily'' recover it---we
+simply dropped the factor of \(H(n - m + 1)\) in our initial approximation of how long it would take to fill all \(k \geq m\).
 
 \section{Sandsifter}
 
