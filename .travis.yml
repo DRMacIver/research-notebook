@@ -3,7 +3,10 @@ language: python
 addons:
   apt:
     packages:
-    - texlive-full
+    - texlive
+    - texlive-latex-recommended
+    - texlive-fonts-extra
+    - texlive-math-extra
     - rubber
 
 script:
