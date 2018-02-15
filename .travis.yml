@@ -10,6 +10,7 @@ addons:
     - texlive-fonts-extra
     - texlive-math-extra
     - latex-xcolor
+    - texlive-pictures
     - rubber
 
 script:
