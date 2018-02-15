@@ -12,6 +12,7 @@ addons:
     - latex-xcolor
     - texlive-pictures
     - pgf
+    - texlive-full
     - rubber
 
 script:
