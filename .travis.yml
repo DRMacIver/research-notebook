@@ -1,5 +1,4 @@
 language: c
-
 addons:
   apt:
     packages:
@@ -16,13 +15,13 @@ addons:
     - rubber
 
 script:
-  - rubber -d notes.tex
-
+- rubber -d notes.tex
 before_deploy:
-  - python3 scripts/date-tag.py
-
+- python3 scripts/date-tag.py
 deploy:
   provider: releases
-  api_key: "GITHUB OAUTH TOKEN"
-  file: "notes.pdf"
-  skip_cleanup: true
+  api_key:
+    secure: XBEc4QDlw8v3lLvvzjLv+2mi2ipUnsOBk7s4e79DQQrQNOl272modswBbghm7wufr3jNay8/qo7TWawsN0l8izj4are9UYbJjHWWCpW4paYtVBAk4yU5wNrm9Uh7do1SFxcuDdrLOjxBzjB7SSr0ISvausLQnuJhYzcbRrVDj0YH6+1FadhI771nU0Qby0w1N+hWa1WEwki893I8A1nmBXmb2bEInD6HdxYbr9Q2EiP5mQJp2/LG6C7ZK+hZ1t8bSI9IYlgQNTsnDy/R8ygoOdxiHFdbp16A+sWzPfHk58WJEZ+KYieG5QvOU/1DTltM5F/FFkShMsDyFEIH9NZaEz/W0d5MNwpxnl7YQLz7Dt3ErE/BbZNzK5lGQQwUg9EUjdFrYNAl+Iu6Xuonl4RgNij4sHZkpe1tbyjpFnx+tcE0dgIfi1m0UM6JW68Y4BXwSIUYn2i6s7p6HSfvLBS0YY1L1zFqH6v6oKKC4Sid2flaFOjEZKGuYcNLVdTi6y+jaTA4HQ68d/KvuI1LBspvdS12I0P1jsZkdeJuCQCf5d7S3rzfmwl8G2kepxX97PLQNrlQrWp4qsswJnpTSwtCK63+7w/VuCOV2IKNNeq/gw807qQsC8fykD2J5dweYh/3flOY8vDGEHiMPrBULcaljTbvvVXxtW8+5zTN7ApLUys=
+  file: notes.pdf
+  on:
+    repo: DRMacIver/research-notebook
