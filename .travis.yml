@@ -1,8 +1,9 @@
-language: python
+language: c
 
 addons:
   apt:
     packages:
+    - python3
     - texlive
     - texlive-latex-recommended
     - texlive-fonts-extra
@@ -13,7 +14,7 @@ script:
   - rubber -d notes.tex
 
 before_deploy:
-  - python scripts/date-tag.py
+  - python3 scripts/date-tag.py
 
 deploy:
   provider: releases
