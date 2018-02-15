@@ -176,6 +176,17 @@ Put the instruction right before a page boundary and watch to see if you trigger
 If you do, then the instruction tried to read off the end of the page.
 By sliding the position of the instruction around you can then find the smallest prefix that does not trigger a page fault.
 
+\section{Parsing with Derivatives}
+
+Parsing with derivatives\cite{DBLP:conf/icfp/MightDS11, DBLP:conf/pldi/0001HM16} is a really neat concept about how you can use laziness and meomization to extend the Brzozowski Derivative to context free languages,
+essentially building up an infinite state automaton lazily as you traverse it.
+
+I'm quite interested in applying this to the generation of objects in context free grammars,
+but so far mostly just haven't---some
+initial prototypes were reasonably promising but have never really manifested into anything very interesting.
+
+One place this \emph{does} get used in Hypothesis is that the improved fixed point calculations in~\cite{DBLP:conf/pldi/0001HM16} are how Hypothesis calculates various properties of strategies which may recursively refer to each other.
+
 \section{References}
 
 \bibliography{references}{}
