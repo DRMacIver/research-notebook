@@ -187,6 +187,30 @@ initial prototypes were reasonably promising but have never really manifested in
 
 One place this \emph{does} get used in Hypothesis is that the improved fixed point calculations in~\cite{DBLP:conf/pldi/0001HM16} are how Hypothesis calculates various properties of strategies which may recursively refer to each other.
 
+\section{Boltzmann Sampling}
+
+Given some combinatorial class of objects \(\mathcal{C}\) with a notion of size,
+we might want to sample from it in such a way that any two objects with the same size occur with the same probability.
+Boltzmann Samplers are a class of samplers which have this property and are amenable to mostly automated constructions.
+
+The idea is that we consider the generationg function \(f(z) = \sum\limits_n z^n C_n\),
+where \(C_n =  |\{c \in C: |c| = n\}|\}\),
+so the coefficient of \(z^n\) is the number of elements of \(\mathcal{C}\) with size \(n\).
+
+The Boltzmann samplers for \(\mathcal{C}\) are then a family of samplers with parameter \(z\) which pick an element of size \(n\) with probability \(z^n \frac{C_n}{f(z)}\).
+
+The nice thing about this is that they combine well.\ 
+e.g.\ if we have two disjoint classes of \(\mathcal{C}\) and \(\mathcal{C}'\) then we can construct a Boltzmann sampler for \(\mathcal{C} \cup \mathcal{C}'\) as a weighted choice between the Boltzman samplers for each,
+picking from \(\mathcal{C}'\) with probability \(\frac{f'(z)}{f(z) + f'(z)}\).
+
+A neat thing I have observed\cite{falbs} that probably isn't novel but that I haven't seen elsewhere is that given a regular language expressed as a deterministic finite automaton
+(e.g.\ by using derivatives!)
+you can automatically calculate a Boltzmann sampler for it using symbolic linear algebra
+(or non-symbolic linear algebra if you fix the parameter up front).
+
+The similarity of this paper to~\cite{DBLP:journals/dam/FlajoletGT92} is probably not accidental given that they have an author in common---both
+are about using generating functions of regular languages to simplify some natural probabilistic problem through semi-automatic constructions.
+
 \section{References}
 
 \bibliography{references}{}
