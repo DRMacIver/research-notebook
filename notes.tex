@@ -10,14 +10,18 @@
 
 %% Useful packages
 \usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{listings}
 
+
 \usepackage{mathtools}
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\newtheorem{proposition}{Proposition}
 
 \title{Research Notebook}
 \author{David R. MacIver}
@@ -233,7 +237,35 @@ one reason I'm interested in it is that a lot of the testing literature's focus 
 then differential testing won't pick this up,
 and if mistakes are non-independent then the probability of this happening may be much larger than expected.
 
-\section{References}
+\section{Miscellaneous Sums and Integrals}
+
+The following came up in~\cite{DBLP:journals/dam/FlajoletGT92} as ``well known''.
+It wasn't well known to me,
+so I felt obliged to calculate it.
+I'm not sure the process was enlightening enough to be worth it.
+
+\begin{proposition}
+\(\sum\limits_{q = 1}^m {(-1)}^{q - 1} {m \choose q} \frac{1}{q} = H(m)\)
+\end{proposition}
+
+\begin{proof}
+\begin{align*}
+\sum\limits_{q = 1}^m {(-1)}^{q - 1} {m \choose q} \frac{1}{q} &= \sum\limits_{q = 1}^m {(-1)}^{q - 1} {m \choose q} \int\limits_0^1 x^{q - 1} dx\\
+&= \int\limits_0^1 \sum\limits_{q = 1}^m {(-1)}^{q - 1} {m \choose q} x^{q - 1} dx\\
+&= \int\limits_0^1 -x^{-1} \sum\limits_{q = 1}^m {m \choose q} {(-x)}^q dx\\
+&= \int\limits_0^1 -x^{-1} \left( \sum\limits_{q = 0}^m {m \choose q} {(-x)}^q - 1 \right)dx \\
+&= \int\limits_0^1 -x^{-1} \left( {(1 - x)}^m - 1 \right)dx \\
+&= \int\limits_0^1 {(1 - x)}^{-1} (x^m - 1) dx \\
+&= \int\limits_0^1 \sum\limits_{n = 0}^\infty x^n (x^m - 1) dx \\
+&= \sum\limits_{n = 0}^\infty \int\limits_0^1 x^n (x^m - 1) \\
+&= \sum\limits_{n = 0}^\infty \frac{1}{n + m} - \frac{1}{n} \\
+&= \lim\limits_{k \to \infty}  H(m) - \sum\limits_{n = k}^{m + k} \frac{1}{n + m}\\
+&= H(m)\\
+\end{align*}
+
+Where the conversion of the infinite sum to the limit works because for every \(n \geq m\) the positive term in the summand cancels the negative term from the summand for \(n - m\),
+and the final limit is calculated because \(0 \leq \sum\limits_{n = k}^{m + k} \frac{1}{n + m} \leq \frac{m}{n}\).
+\end{proof}
 
 \bibliography{references}{}
 \bibliographystyle{acm}
