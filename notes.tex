@@ -353,6 +353,32 @@ Where the conversion of the infinite sum to the limit works because for every \(
 and the final limit is calculated because \(0 \leq \sum\limits_{n = k}^{m + k} \frac{1}{n + m} \leq \frac{m}{n}\).
 \end{proof}
 
+\section{Coverage Guided Fuzzing}
+
+I need to do more research on this before I have anything intelligent to say about it,
+but here are some things I think are neat ideas.
+
+American Fuzzy Lop (AFL)~\cite{AFL} is of course kinda a big deal in this space.
+There's quite a lot of literature on extending it,
+though I'm not wholly convinced by it.
+
+Nezha~\cite{DBLP:conf/sp/PetsiosTSKJ17} has the core idea that if you're doing differential testing between a bunch of different versions of something then maybe you should prioritise things that exhibit differences in behaviour!
+It starts from some measurement \(\delta(x, s)\) taking an input and an SUT and returning some label for it,
+then when doing differential testing between \(s_1, \ldots, s_n\) you can associate with an input \(x\) the profile \(\delta(x, s_1), \ldots, \delta(x, s_n)\).
+Any particular value of this profile is not ``intrinsically'' interesting,
+but the fact that two different inputs give a different profile indicates that the SUTs are exhibiting some difference in behaviour.
+The important part of this is that they can do this without showing up any particularly novel behaviour in any one SUT!\@
+I have not looked over their claims of its efficacy in any detail,
+but it's an interesting idea.
+
+Cause Reduction~\cite{DBLP:journals/stvr/GroceAZCR16} is the idea,
+dear to my heart,
+that you can apply test case reduction to many other problems,
+not just bugs.
+In particular you can apply it to coverage targets!
+In this case they applied it mostly to coarse grained coverage targets (lines, branches, etc),
+but I'm also interested in what happens with more fine grained ones.
+
 \bibliography{references}{}
 \bibliographystyle{acm}
 
