@@ -1,4 +1,4 @@
-\documentclass[a4paper]{article}
+\documentclass[a4paper]{book}
 
 %% Language and font encodings
 \usepackage[english]{babel}
@@ -33,12 +33,21 @@
 
 \maketitle
 
-This is mostly a collection of research level material I am intersted in.
+\chapter{Introduction}
+
+This is mostly a collection of research level material I am interested in.
 It's something like a lab book,
 something like a collection of papers I find interesting and want to make sure I remember and/or understand.
 
 It is likely to be terribly organised,
 sorry.
+It's primarily intended as a place for me to write stuff that is useful for me to have written down,
+and only secondarily intended for public consumption.
+
+\chapter{Literature Review}
+
+This chapter is ``mostly'' literature review,
+with the occasional sprinkling of my own work and ideas in it as they seem to fit.
 
 \section{Inference of Finite Automata}
 
@@ -135,7 +144,7 @@ beginning with a very coarse paritition that treats everything as equivalent and
 One thing I thought was interesting about it is the core algorithm \emph{looks} like one you should have to iterate to a fixed point,
 but actually it completes in a single run.
 
-\section{Coupon Collecting and Sundry}
+\section{Coupon Collecting and Sundry}\label{sec:coupons}
 
 I've become interested in the non-uniform coupon collector problem recently,
 which takes the following form:
@@ -151,89 +160,6 @@ but more importantly ``Birthday Paradox, Coupon Collectors, Caching Algorithms a
 It takes the observation that this and many similar problems can be framed in terms of regular languages,
 and that by using standard constructions of generating functions for regular languages,
 you can more or less automate the calculation of their expected value (for values of ``automate'' that include calculating some potentially nasty integrals).
-
-Here is an interesting family of lower bounds on \(E(S)\) that doesn't easily follow from these results:
-
-\begin{lemma}
-If \(p = P(X \geq m)\) then \(E(T) \geq \frac{n - m + 1}{p}\).
-\end{lemma}
-
-\begin{proof}
-Let \(L_0 = 0\) and \(L_{i + 1}\) be the first time after \(L_i\) that \(X_{T_{i + 1}} \geq m\).
-
-\(X_i \geq n\) if and only if \(i = L_j\) for some \(j\).
-Thus \(S \geq T_{n - m + 1}\),
-as in order to have covered every value \(\{1, \ldots n\}\) we must in particular have coverd every value \(\{m, \ldots, n\}\).
-
-\(T_{i + 1} - T_i\) is geometrically distributed with parameter \(p\), so has expected value \(\frac{1}{p}\).
-Thus \(E(T_i) = \frac{i}{p}\),
-and so \(E(S) \geq \frac{n - m + 1}{p}\).
-\end{proof}
-
-\begin{corollary}
-For any strictly increasing function \(f\) and \(1 \leq m \leq n\)
-\(E(S) \geq \frac{f(m) (n - m + 1)}{E(f(X))}\).
-\end{corollary}
-
-\begin{proof}
-This follows straightforwardly from the standard result that \(P(X \geq m) \leq \frac{E(f(X))}{f(m)}\) and the previous lemma.
-\end{proof}
-
-\begin{theorem}
-\(E(S) \geq \frac{2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - e (k + 1) {(n + 1)}^{k - 1}}{E(X^k)}\)
-\end{theorem}
-
-\begin{proof}
-Let \(f(x) = x^k\) in the above corollary.
-
-Now, define \(g(x) = (n - x + 1) x^k\).
-We'd like to find \(m \in \{1, \ldots, m\}\) that maximises \(g(m)\) to get the largest lower bound on \(E(S)\).
-
-\begin{align*}
-g'(x) &= (n - x + 1) k x^{k - 1} - x^k\\
-&= (n + 1) k x^{k - 1} - (k + 1) x^k\\
-&= \left( (n + 1) k - (k + 1) x \right) x^{k - 1}\\
-&= \left( (n + 1) \frac{k}{k + 1} - x \right)(k + 1) x^{k - 1}\\
-\end{align*}
-
-So \(g'(x) = 0\) when \(x = x_{\max} = \frac{k}{k + 1} (n + 1)\).
-
-Unfortunately we can't just plug in \(x_{\max}\),
-because it might not be integral.
-But we can find an integer \(1 \leq i_{\max} \leq n\) with \(|x_{\max} - i| \leq 1\).
-\(|g'(y)| \leq (k + 1){(1 + x_{\max})}^{k - 1}\) for \(y\) between \(x_{\max}\) and \(i_{\max}\),
-so
-
-\(g(i_{\max}) \geq (n - x_{\max} + 1)x_{\max}^{k} - (k + 1){(1 + x_{\max})}^{k - 1}\)
-
-\begin{align*}
-(n - x_{\max} + 1)x_{\max}^{k} &= \frac{n + 1}{k + 1} {(n + 1)}^k {(1 + k^{-1})}^k\\
-&= {(k + 1)}^{-1} {(n + 1)}^{k + 1} {(1 + k^{-1})}^k\\
-&\geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} \\
-\end{align*}
-
-Where the latter bound comes from the fact that \(x \to {(1 + x^{-1})}^x\) is monotonic increasing.
-
-\begin{align*}
-{(1 + x_{\max})}^{k - 1} &= {(n + 1)}^{k - 1} {(1 + k^{-1})}^k \\
-&\leq e {(n + 1)}^{k - 1}\\ 
-\end{align*}
-
-Thus we have \(g(i_{\max}) \geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - (k + 1) e {(n + 1)}^{k - 1}\).
-Plugging this in to the results of the previous corollary,
-this gives us the desired result.
-
-\end{proof}
-
-\begin{corollary}
-If \(X\) comes from some family of distributions such that \(E(X^k)\) is bounded as \(n\) varies,
-then \(E(S) \geq O(n^{k + 1})\).
-\end{corollary}
-
-This bound is not quite tight,
-and is missing a logarithmic factor.
-A more involved calculation could ``easily'' recover it---we
-simply dropped the factor of \(H(n - m + 1)\) in our initial approximation of how long it would take to fill all \(k \geq m\).
 
 \section{Sandsifter}
 
@@ -323,7 +249,37 @@ one reason I'm interested in it is that a lot of the testing literature's focus 
 then differential testing won't pick this up,
 and if mistakes are non-independent then the probability of this happening may be much larger than expected.
 
-\section{Miscellaneous Sums and Integrals}
+\section{Coverage Guided Fuzzing}
+
+I need to do more research on this before I have anything intelligent to say about it,
+but here are some things I think are neat ideas.
+
+American Fuzzy Lop (AFL)~\cite{AFL} is of course kinda a big deal in this space.
+There's quite a lot of literature on extending it,
+though I'm not wholly convinced by it.
+
+Nezha~\cite{DBLP:conf/sp/PetsiosTSKJ17} has the core idea that if you're doing differential testing between a bunch of different versions of something then maybe you should prioritise things that exhibit differences in behaviour!
+It starts from some measurement \(\delta(x, s)\) taking an input and an SUT and returning some label for it,
+then when doing differential testing between \(s_1, \ldots, s_n\) you can associate with an input \(x\) the profile \(\delta(x, s_1), \ldots, \delta(x, s_n)\).
+Any particular value of this profile is not ``intrinsically'' interesting,
+but the fact that two different inputs give a different profile indicates that the SUTs are exhibiting some difference in behaviour.
+The important part of this is that they can do this without showing up any particularly novel behaviour in any one SUT!\@
+I have not looked over their claims of its efficacy in any detail,
+but it's an interesting idea.
+
+Cause Reduction~\cite{DBLP:journals/stvr/GroceAZCR16} is the idea,
+dear to my heart,
+that you can apply test case reduction to many other problems,
+not just bugs.
+In particular you can apply it to coverage targets!
+In this case they applied it mostly to coarse grained coverage targets (lines, branches, etc),
+but I'm also interested in what happens with more fine grained ones.
+
+\chapter{Miscellanea}
+
+A collection of things that don't really fit anywhere else.
+
+\section{Sums and Integrals}
 
 The following came up in~\cite{DBLP:journals/dam/FlajoletGT92} as ``well known''.
 It wasn't well known to me,
@@ -353,31 +309,184 @@ Where the conversion of the infinite sum to the limit works because for every \(
 and the final limit is calculated because \(0 \leq \sum\limits_{n = k}^{m + k} \frac{1}{n + m} \leq \frac{m}{n}\).
 \end{proof}
 
-\section{Coverage Guided Fuzzing}
+\section{A Lower Bound on Collecting Coupons}
 
-I need to do more research on this before I have anything intelligent to say about it,
-but here are some things I think are neat ideas.
+Given the setup of Section~\ref{sec:coupons} for the non-uniform coupon collector problem,
+here is an investigation into lower bounds on the expected waiting time for a complete set of coupons.
+There are many like it, but this one is mine.
 
-American Fuzzy Lop (AFL)~\cite{AFL} is of course kinda a big deal in this space.
-There's quite a lot of literature on extending it,
-though I'm not wholly convinced by it.
+\begin{lemma}\label{lemma:couponpartition}
+Let \(U_i\) be the set of distinct values seen by time \(i\) and for \(A \subseteq \{1, \ldots, n\}\) let \(S^A\) be the number of times we have seen \(X_i \in A\) before we have seen every value in \(A\).
+Note that in terms of probabilities this is the same as being \(S\) for the conditional distribution \(X | X \in A\),
+but it's important that these are actually using the same \(X_i\).
 
-Nezha~\cite{DBLP:conf/sp/PetsiosTSKJ17} has the core idea that if you're doing differential testing between a bunch of different versions of something then maybe you should prioritise things that exhibit differences in behaviour!
-It starts from some measurement \(\delta(x, s)\) taking an input and an SUT and returning some label for it,
-then when doing differential testing between \(s_1, \ldots, s_n\) you can associate with an input \(x\) the profile \(\delta(x, s_1), \ldots, \delta(x, s_n)\).
-Any particular value of this profile is not ``intrinsically'' interesting,
-but the fact that two different inputs give a different profile indicates that the SUTs are exhibiting some difference in behaviour.
-The important part of this is that they can do this without showing up any particularly novel behaviour in any one SUT!\@
-I have not looked over their claims of its efficacy in any detail,
-but it's an interesting idea.
+Then \(E(S|U_i = A) = i + \frac{1}{1 - P(X \in A)} E(S^{A^c})\)
+\end{lemma}
 
-Cause Reduction~\cite{DBLP:journals/stvr/GroceAZCR16} is the idea,
-dear to my heart,
-that you can apply test case reduction to many other problems,
-not just bugs.
-In particular you can apply it to coverage targets!
-In this case they applied it mostly to coarse grained coverage targets (lines, branches, etc),
-but I'm also interested in what happens with more fine grained ones.
+\begin{proof}
+Let \(L_0 = i\) and \(L_{k + 1}\) be the first time after \(L_k\) that \(X_{L_{k + 1}} \not\in A\).
+
+Then \(E(S | S^{A^c} = m) = E(L_m)\).
+But \(L_{k + 1} - L_{k}\) is geometrically distributed with parameter \(P(X \not\in A) = 1 - P(X \in A)\),
+so \(E(L_{k + 1} - E_(L_k)) = \frac{1}{1 - P(x \in A)}\),
+and so \(E(L_m) = i + \frac{m}{1 - P(x \in A)}\).
+By applying conditional expectation we thus have \(E(S) = i + \frac{1}{1 - P(X \in A)} E(S^{A^c})\) as desired.
+\end{proof}
+
+This partition result also gives u
+
+\begin{theorem}
+\(E(S) \geq n H(n)\), with equality if and only if \(X\) is a uniform distribution.
+\end{theorem}
+
+\begin{proof}
+We will do this by induction.
+It is trivially true when \(n = 1\) because \(S = 1\) in that case.
+
+By applying the previous lemma,
+\(E(S | X_1 = i) = 1 + \frac{1}{1 - p_i} E(S^{{\{i\}}^c})\).
+
+\(S^{{\{i\}}^c}\) has the same distribution as \(S\) for the conditional distribution of \(X | X \neq i\),
+so in particular it has the same expecation.
+Thus by our inductive hypothesis,
+\(E(S^{{\{i\}}^c}) \geq n H(n)\) with equality if and only if this conditional distribution is uniform.
+
+Let \(b_i = E(S^{{\{i\}}^c})\).
+Then by conditional expectation,
+\(E(S) = 1 + \sigma \frac{p_i}{1 - p_i} b_i \geq (n - 1) H(n) \sigma \frac{p_i}{1 - p_i} \).
+
+This sum can be seen to be strictly minimized when \(p_i = \frac{1}{n}\),
+which gives us \(E(S) \geq 1 + (n - 1) H(n) \frac{n}{n - 1}\) with equality if and only if \(X\) is uniform.
+
+A simple induction shows that this term is equal to \(n H(n)\) and the result is proved.
+\end{proof}
+
+\begin{proposition}\label{prop:coupontail}
+If \(p = P(X \geq m)\) then \(E(T) \geq \frac{n - m + 1}{p}\).
+\end{proposition}
+
+\begin{proof}
+This is just the lemma applied to the very crude lower bound that \(E(S^A) \geq |A|\).
+\end{proof}
+
+\begin{proposition}\label{prop:couponestimate}
+For any strictly increasing function \(f\) and \(1 \leq m \leq n\)
+\(E(S) \geq \frac{f(m) (n - m + 1)}{E(f(X))}\).
+\end{proposition}
+
+\begin{proof}
+This follows straightforwardly from the standard result that \(P(X \geq m) \leq \frac{E(f(X))}{f(m)}\) and Corollary~\ref{prop:coupontail}.
+\end{proof}
+
+\begin{theorem}
+\(E(S) \geq \frac{2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - e (k + 1) {(n + 1)}^{k - 1}}{E(X^k)}\)
+\end{theorem}
+
+\begin{proof}
+Let \(f(x) = x^k\) in Proposition~\ref{prop:couponestimate}.
+
+Now, define \(g(x) = (n - x + 1) x^k\).
+We'd like to find \(m \in \{1, \ldots, m\}\) that maximises \(g(m)\) to get the largest lower bound on \(E(S)\).
+
+\begin{align*}
+g'(x) &= (n - x + 1) k x^{k - 1} - x^k\\
+&= (n + 1) k x^{k - 1} - (k + 1) x^k\\
+&= \left( (n + 1) k - (k + 1) x \right) x^{k - 1}\\
+&= \left( (n + 1) \frac{k}{k + 1} - x \right)(k + 1) x^{k - 1}\\
+\end{align*}
+
+So \(g'(x) = 0\) when \(x = x_{\max} = \frac{k}{k + 1} (n + 1)\).
+
+Unfortunately we can't just plug in \(x_{\max}\),
+because it might not be integral.
+But we can find an integer \(1 \leq i_{\max} \leq n\) with \(|x_{\max} - i| \leq 1\).
+\(|g'(y)| \leq (k + 1){(1 + x_{\max})}^{k - 1}\) for \(y\) between \(x_{\max}\) and \(i_{\max}\),
+so
+
+\(g(i_{\max}) \geq (n - x_{\max} + 1)x_{\max}^{k} - (k + 1){(1 + x_{\max})}^{k - 1}\)
+
+\begin{align*}
+(n - x_{\max} + 1)x_{\max}^{k} &= \frac{n + 1}{k + 1} {(n + 1)}^k {(1 + k^{-1})}^k\\
+&= {(k + 1)}^{-1} {(n + 1)}^{k + 1} {(1 + k^{-1})}^k\\
+&\geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} \\
+\end{align*}
+
+Where the latter bound comes from the fact that \(x \to {(1 + x^{-1})}^x\) is monotonic increasing.
+
+\begin{align*}
+{(1 + x_{\max})}^{k - 1} &= {(n + 1)}^{k - 1} {(1 + k^{-1})}^k \\
+&\leq e {(n + 1)}^{k - 1}\\ 
+\end{align*}
+
+Thus we have \(g(i_{\max}) \geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - (k + 1) e {(n + 1)}^{k - 1}\).
+Plugging this in to the results of the previous corollary,
+this gives us the desired result.
+
+\end{proof}
+
+\begin{corollary}
+If \(X\) comes from some family of distributions such that \(E(X^k)\) is bounded as \(n\) varies,
+then \(E(S) \geq O(n^{k + 1})\).
+\end{corollary}
+
+This bound is not quite tight,
+and is missing a logarithmic factor.
+A more involved calculation could ``easily'' recover it---we
+simply dropped the factor of \(H(n - m + 1)\) in our initial approximation of how long it would take to fill all \(k \geq m\).
+
+These bounds are particularly interesting because \(E(S)\) is independent under permutations of \(\{1, \ldots, n\}\),
+and thus we may reorder the \(p_i\) values however we want before calculating these bounds.
+
+\begin{theorem}
+Let \(\sigma\) be a permutation of \(\{1, \ldots, n\}\).
+If \(f\) is strictly increasing on \([1, n]\) then \(E(f(\sigma(X)))\) is strictly minimized when \(\sigma(i) < \sigma(j)\) implies \(p_i \geq p_j\).
+\end{theorem}
+
+\begin{proof}
+Suppose that \(\sigma\) does not have this property.
+Pick \(i, j\) with \(p_i < p_j\) and \(\sigma(i) < \sigma(j)\).
+Now create \(\sigma' = (\sigma(i) \sigma(j)) \cdot \sigma\),
+the permutation that first performs \(\sigma\) and then swaps \(\sigma(i)\) with \(\sigma(j)\).
+
+Now:
+
+\begin{align*}
+E(f(\sigma'(X))) - E(f(\sigma(X))) &= p_i \sigma(j) + p_j \sigma(i) -  p_j \sigma(j) - p_i \sigma(i) \\
+&= (p_j - p_i) (\sigma(i) - \sigma(j)) \\
+&< 0\\ 
+\end{align*}
+
+Where the latter inequality follows because \(p_j - p_i > 0\) and \(\sigma(i) - \sigma(j) < 0\),
+by our assumptions.
+\end{proof}
+
+\begin{theorem}
+Let \(X\) be such that \(p_{i + 1} \leq p_i\),
+and let \(f\) be a strictly increasing function on \(\{1, \ldots, n\}\)
+Then \(E(f(X))\) is strictly maximized when \(X\) is the uniform distribution.
+\end{theorem}
+
+\begin{proof}
+A similar argument as the previous theorem: Suppose we have \(i\) with \(p_{i + 1} < p_i\).
+Write \(p_i = a + b, p_{i + 1} = a - b\),
+where \(a = \frac{p_i + p_{i + 1}}{2}\) and \(b = \frac{p_i - p_{i + 1}}{2}\).
+Then if \(X'\) results from replacing both \(p_i\) and \(p_{i + 1}\) with \(a\),
+this will result in
+
+\begin{align*}
+E(X') - E(X) &= a f(i) + a f(i + 1) - (a + b) f(i) - (a - b) f(i + 1) \\
+&= b (f(i + 1) - f(i)) \\
+&> 0\\
+\end{align*}
+
+So whenever we have two adjacent probabilities that are not equal,
+we can strictly increase the expectation by making them equal,
+thus this expectation is maximized by the uniform distribution.
+
+\end{proof}
+
+Thus with any strictly increasing function \(f\),
+once we have reorderd the values of \(X\) in this way we can regard \(E(f(X))\) as a measure of ``how far from uniform'' \(X\) is.
 
 \bibliography{references}{}
 \bibliographystyle{acm}
