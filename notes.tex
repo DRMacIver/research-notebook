@@ -488,6 +488,117 @@ thus this expectation is maximized by the uniform distribution.
 Thus with any strictly increasing function \(f\),
 once we have reorderd the values of \(X\) in this way we can regard \(E(f(X))\) as a measure of ``how far from uniform'' \(X\) is.
 
+\section{Boltzmann Sampling of Levenshtein Automata}
+
+\newcommand{\levlang}[2]{\mathcal{L} (#1, #2)}
+
+Let \(\mathcal{A}\) be an alphabet.
+To avoid triviality assume \(|\mathcal{A}| \geq 2\).
+
+The Levenshtein distance of two strings \(u, v\) over \(\mathcal{A}\), \(d(u, v)\), is the length of the shortest path from \(u\) to \(v\) where a step in the path is either replacing a single character, deleting as ingle character, or inserting a single character.
+
+The set of strings \(\levlang{u, n} = \{ v: d(u, v) \leq n \}\) is finite,
+and so certainly regular,
+but it even admits a fairly small DFA (this is not a new observation at all).
+
+This means we should be able to calculate a Boltzmann sampler for it\cite{falbs}!
+
+Can we do so efficiently?
+
+We'll use the Brzozowski derivative to explore the structure of these languages.
+
+Let \(b_L\) be the generating function of a language \(L\).
+
+First: A crosscheck we can use is that the coefficients in the generating function must always be polynomials,
+and the coefficients must be in \([|u| - n, |u| + n]\),
+as any single step can only change the size by at most one,
+so there are no strings of length outside that range to contribute to the generating function.
+
+First,
+two useful special cases:
+
+\begin{proposition}
+Now note that \(\levlang{\epsilon}{n}\) is the set of all strings of length at most \(n\),
+so has generating function \(b_{\levlang{\epsilon}{n}}(z) = \frac{1 - {(|A|x)}^{n + 1}}{1 - |A| z}\).
+\end{proposition}
+
+\begin{proposition}
+\(\levlang{v}{0}\) matches only \(v\),
+so has \(b_{\levlang{v}{0}} = z^{|v|}\) 
+\end{proposition}
+
+\begin{theorem}
+Let \(v = cu\) where \(c \in \mathcal{A}\),
+and let \(\delta\) be the Brzozowski derivative.
+
+\begin{itemize}
+\item \(\delta(\levlang{v}{n}, c) = \levlang{u}{n}\).
+\item \(\delta(\levlang{v}{b}) = \levlang{cu}{n - 1} \cup \levlang{u}{n - 1} \cup \delta(\levlang{u}{n - 1}, b)\)
+\end{itemize}
+
+\end{theorem}
+
+\begin{proof}
+If \(b = c\) there is nothing to do that we couldn't do later,
+so we can just consume it and match the rest of the string,
+thus \(\delta(\levlang{cu}{n}, c) = \levlang{u}{n}\).
+
+If \(b \neq c\) then we can either delete \(b\) from the string,
+meaning that the suffix must now be in \(\levlang{cu}{n - 1}\),
+replace it with \(c\),
+meaning that the suffix must now be in \(\levlang{u}{n - 1}\),
+or insert \(c\),
+which means that the remainder of the string \emph{including the current character},
+must be in \(\levlang{u}{n - 1}\),
+i.e.\ the suffix must be in \(\delta(\levlang{u}{n - 1}, b)\).
+So \(\delta(v, b)\) is the union of these three possibilities.
+\end{proof}
+
+\begin{proposition}
+Decompose \(v\) as \(v_1 \ldots v_m\) where each \(v_i\) consists of repetitions of a single character \(c_i\),
+and the character in \(v_i\) is distinct from that in \(v_{i + 1}\).
+Let \(n = |v|\) and suppose \(n > 0\).
+
+Then \(b_{\levlang{v}{1}} = m z^{n - 1} + (1 + (|\mathcal{A}| - 1)n) z^{n} + ((n + 1) |\mathcal{A}| - n) z^{n + 1}\)
+\end{proposition}
+
+\begin{proof}
+This is a relatively straightforward counting argument.
+
+You can obtain a string of length \(n - 1\) only by deleting a single character,
+but deleting any character inside \(v_i\) has the same effect,
+so there are only \(m\) distinct deletions.
+
+You can obtain a string of length \(n\) only by leaving the string unchanged or replacing a single character,
+and each index admits \(|\mathcal{A}| - 1\) such replacements.
+
+The calculation for \(n + 1\) is slightly harder.
+Such a string must be obtained by an insertion,
+but we must be careful not to overcount.
+
+First,
+we count all the insertions that just increase the length of one of the \(v_i\) by \(1\).
+This gives us exactly \(m\) new strings.
+
+Now, there are \(n + 1\) points we can insert at.
+If these are interior to a \(v_i\)---that is,
+it is between two characters of the same value---
+then there are \(\mathcal{A} - 1\) possible values to insert (anything other than \(c_i\)),
+but if it is the boundary then there are  \(\mathcal{A} - 2\) values---anything
+other than \(c_i\) or \(c_{i + 1}\).
+
+There are exactly \(m - 1\) points that are not interior---in
+between each of the \(v_i\).
+
+Thus there are \((m - 1)(|\mathcal{A}| - 2) + (n - m + 2)(|\mathcal{A} - 1|) = (n + 1) |\mathcal{A}| - m - n\).
+Counting the insertions that expanded a \(|v_i|\),
+this gives us a total of \((n + 1) |\mathcal{A}| - m - n\) as desired.
+\end{proof}
+
+In general I doubt the existence of a nice formula for this Boltzmann Sampler,
+but the nice thing is that we can use the derivative method to simulate it lazily.
+We can also use the above formula to simplify our calculations whenever we get down to a \(\levlang{v}{1}\) term.
+
 \bibliography{references}{}
 \bibliographystyle{acm}
 
