@@ -10,6 +10,7 @@
 
 %% Useful packages
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage[colorinlistoftodos]{todonotes}
@@ -730,6 +731,92 @@ Although that's not technically true without a modification:
 This could cause us to add more experiments than we previously would have.
 When we discover a state needs to split,
 perhaps we should first try the experiments that we've previously seen that were not on the path to that state before adding a new one?
+
+\subsection{Recursive L*}
+
+This is currently a \emph{very} half-baked idea (and if you're not me and reading this section it probably won't make much sense).
+
+We have some prefix free language \(\mathcal{L}\), a classifier \(f: \mathcal{L} \to \mathbb{N}\),
+and a random variable \(X \in \mathcal{L}\).
+We would like to construct the conditional random variable \(X|f(X) = i\) more efficiently than using rejection sampling
+(as we're specially interested in doing this in cases where \(P(f(X) = i)\) is small).
+
+We are interested in particular in the language \(\{x: \exists i, P(X = i|X \text{ starts with } x) = 1\}\)---these
+are the set of prefixes which are enough to fully define the behaviour of \(X\).
+Note that unlike \(\mathcal{L}\) this is very much not prefix-free:
+It is closed under taking extensions!
+
+The idea I have been trying to figure out is whether we can do this with language inference,
+by creating and then simulating a deterministic finite automaton based on the language.
+This is not really viable,
+both because language inference is intrinsically expensive (even with some of the above ideas) and because the structure of the language while technically regular (we have a size upper bound if we really need one) is potentially massively complicated.
+
+The idea I'd like to explore in this section is whether we can make use of some of our knowledge about the structure and boundary information of the language to fix this.
+
+In Hypothesis,
+we keep track of example boundaries.
+This has a couple of consequences:
+
+\begin{itemize}
+\item We can tell exactly which substring corresponded to a given draw call.
+\item We can perform \emph{precise random replacements} of any draw call we choose---we
+draw the same bytes up to that point and while the draw call of that index is active we return random bytes,
+when it becomes inactive we read from the prefix.
+\end{itemize}
+
+Note that for any draw call,
+the set of strings corresponding to the draw at that index in any test case which agrees with the prefix of this one is itself a prefix free language.
+
+This means that at any index that is right after a completed draw call (counting bytes as draw calls here),
+we have a prefix free language of bytes that can come next (and a generator for them!).
+
+So we can consider this as a prefix-free regular language where the alphabet elements are not bytes,
+but are themselves other prefix-free regular languages!
+
+We have no hope of performing full blown L* here,
+but maybe we don't need to!
+
+We identify states not with strings as in regular L* but with a TestResult object plus an index into its draws and bytes calls.
+
+A state may be in one of two err states:
+Restricted and unrestricted.
+Unrestricted basically means that we don't think the value emitted here matters.
+We want as many states to be unrestricted as possible.
+Unrestricted states are cheap.
+
+A restricted state is one we've started building an automaton for,
+recursively applying the process to the local language!
+
+At the top level we work with the classifier that evaluates \(f(x0\ldots)\).
+Either this will successfully measure whether starting with \(x\) always gives the same value of \(f\),
+or we'll eventually find some string where it doesn't anyway.
+
+When we recursively apply this to the language of a given state,
+we instead apply it to the function that similarly zero-extends the string and then look at the state we end up in in the current state machine.
+
+We can then generate a test case by recursively walking the state graph:
+If the current state is unrestricted,
+just generate it.
+If it's restricted,
+generate a random walk through its state graph that ends up with the desired classification,
+then fill in by recursively generating an example from each of the transitions made.
+Finally, because we only matched up to some prefix, extend the rest with random noise.
+
+We can now check the results against our desired outcome.
+If it agrees with it, great we're done.
+If not we now begin a correction procedure.
+
+In one sense this is much easier than L*,
+because we know the exact point at which things wrong---where
+we entered an accepting state.
+
+But there are two possibilities here:
+One is that we need to introduce a new state,
+but another is just that our generator for the sub-language put us in the wrong place.
+So first we have to check what state we actually ended up in.
+If it's the right one,
+then we add the experiment to our set and split off a new state.
+Either way, we then recursively apply the correction procedure to the language for this state.
 
 \chapter{Reading List}
 
