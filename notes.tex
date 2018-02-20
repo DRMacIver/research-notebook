@@ -51,7 +51,7 @@ I'm not very good at \LaTeX.
 This chapter is ``mostly'' literature review,
 with the occasional sprinkling of my own work and ideas in it as they seem to fit.
 
-\section{Inference of Finite Automata}
+\section{Inference of Finite Automata}\label{sec:langinference}
 
 The paper I learned the most about this subject from was Rivest and Schapire's ``Inference of Finite Automata Using Homing Sequences''~\cite{DBLP:journals/iandc/RivestS93}.
 This builds on Dana Angluin's classic L* search from ``Learning Regular Sets from Queries and Counterexamples''~\cite{DBLP:journals/iandc/Angluin87},
@@ -598,6 +598,138 @@ this gives us a total of \((n + 1) |\mathcal{A}| - n\) as desired.
 In general I doubt the existence of a nice formula for this Boltzmann Sampler,
 but the nice thing is that we can use the derivative method to simulate it lazily.
 We can also use the above formula to simplify our calculations whenever we get down to a \(\levlang{v}{1}\) term.
+
+\chapter{Miscellaneous Ideas}
+
+Half-baked ideas that I should attempt to fully bake at some point.
+
+\section{Patches to L*}
+
+Here are some ideas I have for how to improve L* search.
+The subtext here is that I have a bunch of problems where I would like to use it but am currently unable to due to its cost.
+
+\subsection{L* Search with Character Partitioning}
+
+As observed in ``Regular-expression derivatives re-examined''\cite{DBLP:journals/jfp/OwensRT09},
+it can be extremely helpful to consider DFA transitions not as happening on a single character,
+but instead a whole class of locally equivalent characters.
+
+I think L* search (see Section~\ref{sec:langinference}) could benefit from the same observation!
+
+Suppose we modified L* search as follows:
+Whenever we create a state,
+we associate a partition refinement data structure with it,
+initially treating all characters in the alphabet as equivalent.
+
+When completing the transition graph,
+we then only consider one character (say the smallest, or a randomly chosen one) from each partition.
+
+When giving a counter-example,
+this gives us a transition \(s \to s'\) via a character \(c\),
+and a new experiment \(e\) which distinguishes \(s'\) from the state that we \emph{should} have transitioned to.
+Note that unlike in conventional L*,
+that state might be in the table already!
+
+We can now use this experiment to refine the partition that \(c\) belongs to,
+by evaluating \(sc'e\) for every \(c'\) that we currently believe is equivalent to \(c\).
+If they do not all give the same answer,
+this splits the partition.
+Note that in this case we do not need to add the experiment to our set of experiments!
+
+This is still a correct algorithm for inference because it reduces to L* in the case where all partitions are fully refined,
+and at each point where we invoke the teacher to give us a counterexample one of three things happens:
+
+\begin{enumerate}
+\item The teacher tells us our DFA is correct and we are done.
+\item We find a new inequivalent state.
+\item We strictly refine one of the partitions.
+\end{enumerate}
+
+The reason is that either the canonical element we chose for the partition also produces a wrong outcome,
+in which case a new state is found as it usually is in L* search,
+or \(c\) exhibited different behaviour with \(e\) than said canonical element,
+so the partition is strictly refined.
+
+Thus whenever the DFA is not correct,
+we make progress,
+and thus we eventually terminate in a correct answer.
+
+How much of a complexity improvement is this?
+
+Well, it depends.
+It's not a strict improvement,
+because we make more calls to the teacher,
+but we potentially save a huge amount of time on query calls.
+
+Suppose the minimal DFA has \(m\) states and the alphabet has size \(n\).
+Let \(d_i\) be the number of equivalence classes of characters starting from state \(i\).
+Equivalently,
+\(d_i\) is the number of states reachable in a single transition from \(i\).
+
+Then when we have \(k\) experiments,
+classically L* search requires \(O(mnk)\) queries to complete its transition table (once we have found some suitable fraction of the available states).
+This changes that to \(O(k \sum d_i)\).
+In particular,
+\(d_i \leq m\),
+so we now only need to perform \(O(km \min(m, n)) \) queries to get completion (and possibly much less).
+
+However,
+we may have to perform an additional \(O(\sigma d_i)\) queries to the teacher,
+because we now have refutation steps that only increase the number of refinements.
+
+This might be fine.\
+e.g.\ for my use case more queries to the teacher is in some sense what we \emph{want}---if
+the idea here is that we are using the DFA to guide some fuzzing process then we'd ideally spend almost \emph{all} the time querying the teacher,
+and the table rebuilding process is something we only do when things go wrong,
+and performing \(256 m\) queries each time is hugely undesirable.
+
+\subsection{L* with guessing}
+
+I haven't quite pinned down what I mean by this,
+but I have this intuition that the big problem with L* is that it is too afraid of looking bad in front of teacher.
+That is,
+it tries too hard to get the right answer,
+incurring a large cost in number of queries to avoid a small cost in number of requests for counter-examples.
+If you're in a situation like I am where counter-examples are either cheap or uninteresting,
+this isn't a good trade-off.
+
+So what if you just guessed an answer that was likely to be correct when doing so is cheap?
+
+For example, imagine we have some plausible ordering \(e_1, \ldots, e_k\) of the experiments,
+and we want to calculate which state \(s\) corresponds to.
+Say discovery order + self-organising search or something.
+
+Now suppose we want to determine the state corresponding to \(t\).
+We run down our experiments,
+repeatedly pruning the list of possible states.
+
+What we are \emph{supposed} to do is to run every experiment,
+but what if we just stopped when we got down to one state?
+
+The answer is of course we would make more wrong transitions,
+but maybe that's fine?
+
+When our teacher points out that a transition was wrong,
+we can just check if it was based on a guess,
+and before we do anything else we run the rest of the experiments to see whether we already knew this should have been a novel state before adding a new experiment to the list.
+
+\subsection{L* with local experiments}
+
+One of the big problems with L* is that it has to query every experiment against every state.
+This gets expensive fast!
+
+What if we instead maintained it as a decision tree?
+Each state corresponds to a leaf in the tree,
+and when we find an experiment that distinguishes some previously believed to be equivalent state from it,
+we split the leaf into a branch.
+
+The tree has the potential to become horribly unbalanced,
+but the worst case scenario is that we perform exactly as many queries as we were going to before!
+
+Although that's not technically true without a modification:
+This could cause us to add more experiments than we previously would have.
+When we discover a state needs to split,
+perhaps we should first try the experiments that we've previously seen that were not on the path to that state before adding a new one?
 
 \chapter{Reading List}
 
