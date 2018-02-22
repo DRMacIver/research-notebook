@@ -328,7 +328,7 @@ and the final limit is calculated because \(0 \leq \sum\limits_{n = k}^{m + k} \
 
 \chapter{Miscellaneous Research Questions}
 
-\section{Lower Bounds on Collecting Coupons}
+\section{Lower Bounds on Collecting Coupons}\label{sec:couponbounds}
 
 Given the setup of Section~\ref{sec:coupons} for the non-uniform coupon collector problem,
 here is an investigation into lower bounds on the expected waiting time for a complete set of coupons.
@@ -924,6 +924,42 @@ suppose we had some set of strings \(U\) and we want to construct the automaton 
 We can simply enumerate \(U\) and walk the automaton,
 noting which states appear there,
 and extract the subset of the automaton that contains only those states.
+
+\chapter{The Plateau Problem in Random Testing}
+
+This is something I'm thinking about but haven't quite figured out how to formalise.
+
+``Why is random testing effective for partition tolerance bugs?''\cite{DBLP:journals/pacmpl/MajumdarN18} showed that under some circumstances,
+random testing achieves a lot of different coverage targets very quickly.
+However, their notion of ``very quickly'' involves a \(\frac{1}{p}\) term,
+so when the lower bound on finding a particular coverage target is small,
+this isn't actually quick at all.
+
+This in particular applies when (in very stark contrast to the examples they're considering),
+any two coverage targets are \emph{disjoint}---e.g.\ 
+when the coverage target is a precise coverage profile for everything that was hit.
+
+When this is the case,
+necessarily for some coverage targets, \(p \leq \frac{1}{n}\),
+where \(n\) is the number of distinct targets.
+
+This now ties in with the non-uniform coupon collector problem:
+Finding a covering set is equivalent to collecting all of the coupons!
+
+Suppose we've got some random tester that emits values \(X\),
+and we have some equivalence oracle \(c: X \to \mathbb{N}\) such that any two examples \(x, y\) with \(c(x) = c(y)\) are in some sense equivalent.
+If the equivalence oracle is super-precise that might mean ``exhibit exactly the same behaviour and show exactly the same bugs'',
+but it also might just mean something coarser like ``exhibit the same coverage profile'' or even just something like \(X|c(X) = i\) has some markedly different category of behaviour than \(X\).
+
+The coupon collector problem, and in particular the bounds in Section~\ref{sec:couponbounds},
+show that what we really want is for the distribution of \(c(X)\) to be uniform if \(c\) is precise (or, at least, if the number of truly inequivalent examples in each partition is roughly the same).
+I'm pretty sure this is almost \emph{never} the case!
+
+I have a sneaking suspicion that a lot of why things like American Fuzzy Lop and libfuzzer work is that what they are doing is effectively shifting to a new random tester when the old one appears to be exhausted,
+and doing so in a way that the new random tester is complementary to the old one.
+Effectively what they are doing by picking a new seed is sampling from some approximation to the conditional distribution \(X|c(X) = i\).
+This is both potentially useful because it finds more of the inequivalent examples that could have been lurking in \(c(X) = i\) that were previously found with very low probability,
+but also simply because the new distribution is different enough from the old one that it is likely to have a different set of examples that it finds within reasonable time.
 
 \chapter{Reading List}
 
