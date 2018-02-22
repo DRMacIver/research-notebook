@@ -27,6 +27,24 @@
 \newtheorem{corollary}{Corollary}
 \newtheorem{theorem}{Theorem}
 
+% lstlisting macros
+\lstset{
+  language=Python, % choose the language of the code
+  showspaces=false, % show spaces adding particular underscores
+  showstringspaces=false, % underline spaces within strings
+  showtabs=false, % show tabs within strings adding particular underscores
+  tabsize=8, % sets default tabsize to 2 spaces
+  captionpos=b, % sets the caption-position to bottom
+  mathescape=true, % activates special behaviour of the dollar sign
+  basicstyle=\footnotesize\tt,
+  columns=fullfelxible,
+  xleftmargin=2em,
+  %commentstyle=\rmfamily\itshape,
+  morekeywords={},
+  escapeinside={(*@}{@*)},
+  numbers=left
+}
+
 \title{Research Notebook}
 \author{David R. MacIver}
 
@@ -600,16 +618,12 @@ In general I doubt the existence of a nice formula for this Boltzmann Sampler,
 but the nice thing is that we can use the derivative method to simulate it lazily.
 We can also use the above formula to simplify our calculations whenever we get down to a \(\levlang{v}{1}\) term.
 
-\chapter{Miscellaneous Ideas}
-
-Half-baked ideas that I should attempt to fully bake at some point.
-
-\section{Patches to L*}
+\chapter{Patches to L*}
 
 Here are some ideas I have for how to improve L* search.
 The subtext here is that I have a bunch of problems where I would like to use it but am currently unable to due to its cost.
 
-\subsection{L* Search with Character Partitioning}
+\section{L* Search with Character Partitioning}\label{sec:lstarcharpartition}
 
 As observed in ``Regular-expression derivatives re-examined''\cite{DBLP:journals/jfp/OwensRT09},
 it can be extremely helpful to consider DFA transitions not as happening on a single character,
@@ -684,7 +698,7 @@ the idea here is that we are using the DFA to guide some fuzzing process then we
 and the table rebuilding process is something we only do when things go wrong,
 and performing \(256 m\) queries each time is hugely undesirable.
 
-\subsection{L* with guessing}
+\section{L* with guessing}
 
 I haven't quite pinned down what I mean by this,
 but I have this intuition that the big problem with L* is that it is too afraid of looking bad in front of teacher.
@@ -714,7 +728,7 @@ When our teacher points out that a transition was wrong,
 we can just check if it was based on a guess,
 and before we do anything else we run the rest of the experiments to see whether we already knew this should have been a novel state before adding a new experiment to the list.
 
-\subsection{L* with local experiments}
+\section{L* with local experiments}\label{sec:lstarlocal}
 
 One of the big problems with L* is that it has to query every experiment against every state.
 This gets expensive fast!
@@ -732,7 +746,7 @@ This could cause us to add more experiments than we previously would have.
 When we discover a state needs to split,
 perhaps we should first try the experiments that we've previously seen that were not on the path to that state before adding a new one?
 
-\subsection{Recursive L*}
+\section{Recursive L*}
 
 This is currently a \emph{very} half-baked idea (and if you're not me and reading this section it probably won't make much sense).
 
@@ -817,6 +831,99 @@ So first we have to check what state we actually ended up in.
 If it's the right one,
 then we add the experiment to our set and split off a new state.
 Either way, we then recursively apply the correction procedure to the language for this state.
+
+\section{Lazy L*}
+
+I think this might be the idea that ties everything together.
+
+The key notion here is that actually I don't care about the goal of L*---I
+don't expect languages to be regular,
+and I don't much care about their DFA per se.
+
+This is false in that having a DFA of known structure would be extremely useful,
+but given that I don't expect there to be one I think it makes sense to try to figure out how to do with something weaker.
+
+The construction phase of L* can be thought of as separated out into two parts:
+
+\begin{enumerate}
+\item A process of partition refinement of the infinite set of strings\footnote{
+As in Section~\ref{sec:lstarcharpartition} this is also a useful way of thinking about the behaviour at any given state.
+}.
+\item The construction of a DFA from partition refinement.
+\end{enumerate}
+
+For the partition refinement,
+what we specifically have is that we have some infinite set \(X\) and a set of classifiers \(f_i: X \to \mathbb{N}\) and we want to get progressively better approximations to the partitions defined by \(p_x = \{y: \forall y, f_i(x) = f_i(y)\}\).
+
+Suppose we had an partition refinement data structure that looked as follows:
+
+\begin{lstlisting}
+class PartitionRefinement(object):
+  def __len__(self):
+    """The number of currently known distinct partitions."""
+
+  def __getitem__(self, i):
+    """The canonical representative for partition i.
+    This will never change - once a canonical representative
+    is chosen it is fixed."""
+
+  def partition_of(self, value):
+    """Return the current partition of value. If it is not
+    in any of the existing partitions, a new one will be
+    created and value will be used as its canonical representative.
+    """
+
+  def split_partition(self, value, classifier):
+    """Let i = self.partition_of(value). If classifier(value)
+    != classifier(self[i]) then create a new partition with
+    value as its canonical representative, and split the current
+    partition so that any values in it with distinct outcomes
+    for classifier(v) go in different partitions."""
+\end{lstlisting}
+
+L* search then implies a specific concrete implementation of this data structure that performs every operation fully strictly:
+When you call \texttt{split\_partition} it appends it to a global list of experiments,
+and when you look up a string it consults every one of those experiments to refine the partition.
+However, other implementations are possible!
+e.g. the local experiments idea in Section~\ref{sec:lstarlocal} is basically a suggestion of an alternate implemntation of this idea.
+Additionally,
+this API allows us to calculate the refinements \emph{lazily}.
+We don't have to determine if \(s\) should actually go in a new partition until we're asked what partition \(s\) is in.
+
+In L* we then build the DFA transitions eagerly as follows:
+
+\begin{lstlisting}
+def build_dfa(partition_table, characters):
+  # This should have been set up at the beginning
+  assert len(partition_table) > 0
+  assert partition_table[0] == b''
+
+  transitions = []
+
+  # we might increase the number of partitions as we
+  # go, so this can't be a normal for loop.
+  i = 0  
+  while i < len(partition_table):
+    assert len(transitions) == i
+    transitions.append([])
+    s = partition_table[i]
+    for c in characters:
+      transitions[i][c] = partition_table.partition_of(s + c)
+    i += 1
+  return transitions
+\end{lstlisting}
+
+But there's no reason we have to build it eagerly!
+One of the neat things about the implementation of regular expression matching in terms of the Brzozowski derivative is that you can build the DFA lazily as you match,
+and we can do exactly the same thing here.
+
+This is particularly useful if we want to somehow extract a subset of the automaton that is much smaller than the larger automaton!
+
+For example,
+suppose we had some set of strings \(U\) and we want to construct the automaton consisting of only states that are on the path for some \(x \in U\).
+We can simply enumerate \(U\) and walk the automaton,
+noting which states appear there,
+and extract the subset of the automaton that contains only those states.
 
 \chapter{Reading List}
 
