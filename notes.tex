@@ -65,7 +65,49 @@ I'm not very good at \LaTeX.
 
 \tableofcontents
 
-\chapter{Literature Review}
+\chapter{Property Based Testing Literature Review}
+
+This is mostly an index of existing property-based testing related papers,
+with some commentary.
+
+The foundational paper is of course ``QuickCheck: a lightweight tool for random testing of Haskell programs''\cite{DBLP:conf/icfp/ClaessenH00}.
+The core idea here is that you can express testing as if it were formal verification,
+by using the type signature of a function to fill in random values.
+
+I am not a fan of this idea,
+and think that type driven property based testing is a historical accident that has largely served as an attractive nuisance that has prevented people from implementing better solutions.
+
+``Smallcheck and lazy smallcheck: automatic exhaustive testing for small values''\cite{DBLP:conf/haskell/RuncimanNL08} is in some sense the other foundational paper in this area
+but seems to have proven less popular (and I'm suspicious about its efficacy),
+based on bounded exhaustive enumeration..
+
+``EasyCheck---Test Data for Free''\cite{DBLP:conf/flops/ChristiansenF08} is an interesting extension where the generation is based on randomized tree enumeration,
+where the trees are expressed with non-determinism operators (or just ADTs).
+
+``Type Targeted Testing''\cite{DBLP:conf/esop/SeidelVJ15} is based on using refinement types to satisfy tricky preconditions.
+
+``Targeted property-based testing``\cite{DBLP:conf/issta/LoscherS17} is about some specialisations for the case where the property depends on some numeric value.
+Suppose you have some property \texttt{assert f(x) <= bound}.
+This will tend to be falsified early or not at all---purely
+random testing explores its boundary values very quickly (the probability of the maximum occurring at \(n\) tests is \(\frac{1}{n}\)).
+But by doing a simple hill climbing algorithm based on mutating found values to increase their score,
+this can very easily be found.
+
+``Find more bugs with QuickCheck!''\cite{DBLP:conf/icse/HughesNSA16} is about the problem where certain bugs tend to dominate:
+If you have one very likely bug,
+it will tend to dominate your testing and distract you from finding other bugs.
+In this paper (which is specifically about Erlang QuickCheck's model based testing) they propose using sequences of method calls found in a bug to mark examples to avoid when generating later.
+
+``A PropEr integration of types and function specifications with property-based testing''\cite{DBLP:conf/erlang/PapadakisS11} is about PropEr,
+the other Erlang property-based testing library.
+I haven't actually read it yet.
+
+In the other direction, ``The New Quickcheck for Isabelle''\cite{DBLP:conf/cpp/Bulwahn12} is about a QuickCheck for Isabelle,
+which is a theorem prover
+
+``FitSpec: refining property sets for functional testing''\cite{DBLP:conf/haskell/BraquehaisR16} is about using mutation of tested functions to see whether a set of properties is minimal and complete.
+
+\chapter{Miscellaneous Literature Review}
 
 This chapter is ``mostly'' literature review,
 with the occasional sprinkling of my own work and ideas in it as they seem to fit.
