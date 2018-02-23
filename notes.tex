@@ -107,6 +107,209 @@ which is a theorem prover
 
 ``FitSpec: refining property sets for functional testing''\cite{DBLP:conf/haskell/BraquehaisR16} is about using mutation of tested functions to see whether a set of properties is minimal and complete.
 
+\chapter{Boltzmann Sampling}
+
+Given some combinatorial class of objects \(\mathcal{C}\) with a notion of size,
+we might want to sample from it in such a way that any two objects with the same size occur with the same probability.
+Boltzmann Samplers are a class of samplers which have this property and are amenable to mostly automated constructions.
+
+The idea is that we consider the generationg function \(f(z) = \sum\limits_n z^n C_n\),
+where \(C_n =  |\{c \in C: |c| = n\}|\}\),
+so the coefficient of \(z^n\) is the number of elements of \(\mathcal{C}\) with size \(n\).
+
+The Boltzmann samplers for \(\mathcal{C}\) are then a family of samplers with parameter \(z\) which pick an element of size \(n\) with probability \(z^n \frac{C_n}{f(z)}\).
+
+The nice thing about this is that they combine well.\ 
+e.g.\ if we have two disjoint classes of \(\mathcal{C}\) and \(\mathcal{C}'\) then we can construct a Boltzmann sampler for \(\mathcal{C} \cup \mathcal{C}'\) as a weighted choice between the Boltzman samplers for each,
+picking from \(\mathcal{C}'\) with probability \(\frac{f'(z)}{f(z) + f'(z)}\).
+
+A neat thing I have observed\cite{falbs} that probably isn't novel but that I haven't seen elsewhere is that given a regular language expressed as a deterministic finite automaton
+(e.g.\ by using derivatives!)
+you can automatically calculate a Boltzmann sampler for it using symbolic linear algebra
+(or non-symbolic linear algebra if you fix the parameter up front).
+
+The similarity of this paper to~\cite{DBLP:journals/dam/FlajoletGT92} is probably not accidental given that they have an author in common---both
+are about using generating functions of regular languages to simplify some natural probabilistic problem through semi-automatic constructions.
+
+\section{Boltzmann Sampling over Possibly Infinite Unknown Automata}
+
+Suppose we have some automaton with a finite alphabet \(\mathcal{A}\) and states \(S = \{s_0, \ldots, s_n, \ldots\}\) which may or may not be finite.
+We have a single origin state \(s_0\),
+a transition function \(\delta: \mathcal{A} \times \mathcal{S} \to \mathcal{S}\),
+an an acceptance function \(a: S \to \{0, 1\}\).
+This defines a language \(\mathcal{L}\) over \(\mathcal{A}\) in the usual way:
+Start at \(s_0\), repeatedly move to the next state via the next character of the string,
+if at the end we're in an accepting state the string is in the language.
+Similarly each of the states defines the language \(\mathcal{L_i}\) of suffixes starting from that state,
+with \(\mathcal{L} = \mathcal{L}_0\).
+
+Let \(f_i\) be the Boltzmann generating function for \(\mathcal{L}_i\).
+If we knew these exactly,
+we could calculate a Boltzmann sampler for \(\mathcal{L}\) by defining the random walk that,
+at state \(s_i\),
+chooses between terminating (if the state is expected) with weight one,
+or emitting \(c\) and transitioning to \(s_j = \delta(c, s_i)\),
+with weight \(f_j(x)\).
+
+Unfortunately, we will typically not know these generating functions!
+For regular languages it is possible but expensive to calculate them,
+but we have to find all of the states up front (of which there may be exponentially many),
+and it's moderately expensive in the size.
+For context-free languages the problem is uncomputable in general (I think),
+and for languages of a completely unknown structure we're certainly stuck.
+
+But with only a little information,
+we can actually simulate the Boltzmann sampler fairly efficiently!
+
+Suppose we have lower bounds \(l_i(x)\) and \(u_i(x)\) with \(0 \leq l_i(x) \leq f_i(x) \leq u_i(x)\) for all \(i\).
+Suppose additionally we have \(u_i \leq u(x)\).
+
+It is easy to find such bounds in many cases.
+
+A natural choice of \(l_i\) is \(a\)---in an accepting state,
+the Boltzmann function contains a \(1\) term for the zero-string.
+In an non-accepting state we might not have any strings matching from here at all,
+so without more information \(0\) is the best lower bound we can do.
+
+One possible source of lower bound is that if we have some strings \(v_i\) in the language we can walk the graph and then use them to witness some suffixes of \(s_i\),
+which will give us a lower bound by adding up the terms corresponding to them.
+In general if we know that \(\mathcal{L}_i \supseteq \mathcal{L}'\) with generating function \(f_i'\) then \(l_i(x) = f_i'(x)\) is a suitable choice.
+
+We have three potential sources of upper bounds:
+
+\begin{itemize}
+\item If we know that \(\mathcal{L} \subseteq \mathcal{L}'\) then every \(s_i\) is \(\mathcal{L}\)-equivalent to some state in a representation for \(\mathcal{L}'\),
+so if we have some uniform upper bound \(A(x)\) on states in \(\mathcal{L}'\) then we also have it for states in \(\mathcal{L}\).
+\item \(f_i\) is monotnoic increasing in \(x\), so if we know some upper bound for \(f_i(y)\) with \(y > x\) then we also know it for \(f_i(x)\).
+\item If \(x < \frac{1}{|\mathcal{A}|}\) then \(f_i(x) \leq \sum {(x |\mathcal{A}|)}^n = \frac{1}{1 - x |\mathcal{A}|}\).
+\end{itemize}
+
+We can now use these bounds to simulate a Boltzmann sampler for any fixed value of \(x\) where \(u_i(x) < \infty\) for all \(i\)!
+
+To do this we maintain \emph{bound tables} for each \(i\).
+These are updatable tables such that at any point we guaranteee that \(L[i] \leq f_i(x) \leq U[i]\).
+When we first evaluate \(L[i]\) or \(U[i]\),
+we automatically initialise them to \(l_i(x), u_i(x)\) respectively.
+We also maintain a visited table which tracks if we have ever evaluated \(\delta(c, i)\) (we assume that \(\delta\) is expensive but cached).
+Let \(V[i]\) be the set of \(c \in mathcal{A}\) such that we have previously evaluated \(\delta(c, s_i)\).
+
+We can now perform the random walk of a Boltzmann sampler without ever having to fully compute \(f_i(x)\) as follows:
+
+When making a decision about what to do next (stop or transition) we sample as follows:
+
+\begin{itemize}
+\item Stopping here gets a weight of \(0\) or \(1\) as normal depending on whether \(s_i\) is an accepting state.
+\item For each \(c \in \mathcal{A}\), we give it a weight according to some upper bound on \(f_{\delta(c, s_i)}\).
+If we have previously evaluated \(\delta(c, s_i) = s_j\) then this is \(U[j]\).
+Otherwise it is \(u(x)\).
+If \(u(x) = \infty\) then we can just evaluate \(\delta(c, s_i)\) for each \(c\),
+which is more expensive but allows us to never care about infinite weights.
+We then draw an action with probability proportional to its weight.
+\item If we drew ``stop'' then we stop as normal.
+If we drew \(c\), then we determine \(s_j = \delta(c, s_i)\) if we haven't already.
+We draw a number \(t\) uniformly at random in \([0, U[j]]\).
+If \(t \leq L[j]\) then we emit \(c\) and transition to \(j\).
+If \(t > L[j]\) then we call \texttt{improve(j, t)}.
+After this call,
+we will either have \(L[j] \geq t\),
+or \(U[j] < t\).
+If the former, transition with \(c\) as before.
+If the latter, loop back to step 1 (that is, we stay at the current state but need to re-evaluate what to emit. Note that \(U[j]\) may have changed so we may need to update the sampling process).
+\end{itemize}
+
+The fact this this produces the correct result is fairly straightforward:
+Conceptually what's happening is that we have numbers \(q_e \geq p_e\),
+where \(p_e\) is the true probability of some event.
+The probability of a single loop iteration choosing \(e\) is \(\frac{p_e}{q_e} \frac{q_e}{\sum q_{e'}} = \frac{p_e}{\sum q_{e'}}\).
+So \(P(e| \text{ no repeat }) = p_e\).
+
+\texttt{improve(i, t)} is a function that is designed to do just enough evaluation of the graph to put both \(L[i]\) and \(U[i]\) on the same side of \(t\).
+It does this through a process of iterative refinement of lower bounds,
+by using the recurrence relationship \(f_i(x) = a(i) + \sum\limits_{c \in \mathcal{A}} x f_{\delta(c, s_i)}\).
+
+This is monotonic increasing in the values of \(f_{\delta(c, s_i)}\),
+so in particular we can update the tables according to the following rules:
+
+\begin{itemize}
+\item \(L[i] \leftarrow \max(L[i], a(i) + x \sum\limits_{c \in V[i]} L[\delta(c, i)])\)
+\item \(U[i] \leftarrow \min(U[i], a(i) + x \sum\limits_{c \in V[i]} U[\delta(c, i)]) + (|\mathcal{A} - |V[i]|)u(x)\)
+\end{itemize}
+
+\begin{proposition}
+Once \(|V[i]| = |\mathcal{A}|\) and we have updated \(L[i]\) and \(U[i]\) according to the above rules,
+\(U[i] - L[i] \leq x \max\limits_{s_j = \delta(c, s_i)} (U[j] - L[j])\).
+In particular, \(U[i] - L[i] \leq x u(x)\).
+\end{proposition}
+
+I'm not sure of exactly the best way to get this process to converge at this point.
+If you get the bound down to \(U[i] - L[i] < \epsilon\) then this halts the process with probability \(1 - \epsilon\),
+but the question is how to get the bound down most efficiently?
+
+Evaluating all states reachable in \(n = \lceil\frac{\log \epsilon - \log u(x)}{\log x}\rceil\) steps will achieve that.
+This requires evaluating up to \(|\mathcal{A}|^n\) states,
+although hopefully it wouldn't typically be that many in practice.
+
+Ideas for improving it:
+
+\begin{itemize}
+\item We know how to handle self-loops perfectly, so we should use that.
+\item Possibly this might be better phrased in terms of \(\frac{L[i]}{U[i]}\)?
+That is the desired quantity to maximize, but it's less naturally expressed in terms of its children.
+\item Use a greedy algorithm that just repeatedly tries to halve \(U[i] - L[i]\) by updating it,
+evaluating as many unevaluated transitions as it needs, and recursing (avoiding loops) to the child with the largest contribution to its gap.
+\end{itemize}
+
+Idea:
+
+Measure the ``overspill'', where \(o(i) = 1 - \frac{L[i]}{U[i]}\), or \(0\) if \(U[i] = 0\).
+This is the probability of having to improve the bounds when sampling into state \(i\).
+
+\(o(i) \leq \epsilon\) if and only if \(L[i] \geq (1 - \epsilon)U[i]\).
+
+If \(L, U\) have been updated as above (along with the fix for self-reference),
+suppose \(o(j) \leq \epsilon\) for every \(j\) immediately reachable from \(i\),
+we can use this to bound \(o(i)\).
+First assume \(i\) is not accepting:
+
+\begin{align*}
+o(i) &= 1 - \frac{x \sum L[\delta(c, i)]}{x \sum U[\delta(c, i)]} \\
+&\leq 1 - \frac{x (1 - \epsilon) \sum U[\delta(c, i)]}{x \sum U[\delta(c, i)]} \\
+&= \epsilon\\
+\end{align*}
+
+Now suppose \(i\) is accepting.
+Let \(T = \sum \sum U[\delta(c, i)]\)
+
+\begin{align*}
+o(i) &= 1 - \frac{1 + x \sum L[\delta(c, i)]}{1 + x \sum U[\delta(c, i)]} \\
+&\leq 1 - \frac{1 + x (1 - \epsilon) \sum U[\delta(c, i)]}{1 + x \sum U[\delta(c, i)]} \\
+&= 1 - \frac{1 + x (1 - \epsilon) T}{1 + x T}\\
+&= \frac{1 + x T - (1 + x (1 - \epsilon) T)}{1 + T}\\
+&= \frac{x T - x T + \epsilon x T}{1 + T}\\
+&= \epsilon \frac{x T}{1 + x T}\\
+&\leq \epsilon \min(1, xT)\\
+\end{align*}
+
+So when \(xT\) is small,
+we get a much tighter bound on the values for accepting nodes.
+
+\begin{proposition}
+Let \(f_i(x) = \sum\limits_{k \geq 0} C_k x^k\).
+Then \(f_i(x) - \sum\limits_{k = 0}^n C_k x^k \leq {(|\mathcal{A}|x)}^{n + 1} u(x)\).
+\end{proposition}
+
+\begin{proof}
+A string in the language is either of length \(\leq n\),
+and thus appears in the first \(n\) terms,
+or is exactly \(n + 1\) characters followed by the language of some state.
+We thus have the remainder as \(\sum\limits_{|w| = n + 1} x^{n + 1} f_{\delta(w, s_i)} \leq {(|\mathcal{A}|x)}^{n + 1} u(x)\) as desired.
+\end{proof}
+
+We can also use this to look for probabilistic lower bounds if we're willing to approximate (which we probably should be).
+If \(i\) is not accepting and for \(k \leq n\) the probability of a random string of length \(k\) being in \(\mathcal{L}_i\) is at most \(p\),
+then we must have \(C_k \leq p |\mathcal{A}|^k\).
+This then gives us an upper bound on the initial polynomial of \(p x |\mathcal{A}| \frac{{x |\mathcal{A}|}^n - 1}{x |\mathcal{A}| - 1}\).
+
 \chapter{Miscellaneous Literature Review}
 
 This chapter is ``mostly'' literature review,
@@ -265,30 +468,6 @@ but so far mostly just haven't---some
 initial prototypes were reasonably promising but have never really manifested into anything very interesting.
 
 One place this \emph{does} get used in Hypothesis is that the improved fixed point calculations in~\cite{DBLP:conf/pldi/0001HM16} are how Hypothesis calculates various properties of strategies which may recursively refer to each other.
-
-\section{Boltzmann Sampling}
-
-Given some combinatorial class of objects \(\mathcal{C}\) with a notion of size,
-we might want to sample from it in such a way that any two objects with the same size occur with the same probability.
-Boltzmann Samplers are a class of samplers which have this property and are amenable to mostly automated constructions.
-
-The idea is that we consider the generationg function \(f(z) = \sum\limits_n z^n C_n\),
-where \(C_n =  |\{c \in C: |c| = n\}|\}\),
-so the coefficient of \(z^n\) is the number of elements of \(\mathcal{C}\) with size \(n\).
-
-The Boltzmann samplers for \(\mathcal{C}\) are then a family of samplers with parameter \(z\) which pick an element of size \(n\) with probability \(z^n \frac{C_n}{f(z)}\).
-
-The nice thing about this is that they combine well.\ 
-e.g.\ if we have two disjoint classes of \(\mathcal{C}\) and \(\mathcal{C}'\) then we can construct a Boltzmann sampler for \(\mathcal{C} \cup \mathcal{C}'\) as a weighted choice between the Boltzman samplers for each,
-picking from \(\mathcal{C}'\) with probability \(\frac{f'(z)}{f(z) + f'(z)}\).
-
-A neat thing I have observed\cite{falbs} that probably isn't novel but that I haven't seen elsewhere is that given a regular language expressed as a deterministic finite automaton
-(e.g.\ by using derivatives!)
-you can automatically calculate a Boltzmann sampler for it using symbolic linear algebra
-(or non-symbolic linear algebra if you fix the parameter up front).
-
-The similarity of this paper to~\cite{DBLP:journals/dam/FlajoletGT92} is probably not accidental given that they have an author in common---both
-are about using generating functions of regular languages to simplify some natural probabilistic problem through semi-automatic constructions.
 
 \section{Fault Independence}
 
