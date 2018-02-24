@@ -133,6 +133,9 @@ are about using generating functions of regular languages to simplify some natur
 
 \section{Boltzmann Sampling over Possibly Infinite Unknown Automata}
 
+Note for those who are following along at home:
+This chapter is basically stream of consciousness.
+
 Suppose we have some automaton with a finite alphabet \(\mathcal{A}\) and states \(S = \{s_0, \ldots, s_n, \ldots\}\) which may or may not be finite.
 We have a single origin state \(s_0\),
 a transition function \(\delta: \mathcal{A} \times \mathcal{S} \to \mathcal{S}\),
@@ -309,6 +312,29 @@ We can also use this to look for probabilistic lower bounds if we're willing to 
 If \(i\) is not accepting and for \(k \leq n\) the probability of a random string of length \(k\) being in \(\mathcal{L}_i\) is at most \(p\),
 then we must have \(C_k \leq p |\mathcal{A}|^k\).
 This then gives us an upper bound on the initial polynomial of \(p x |\mathcal{A}| \frac{{x |\mathcal{A}|}^n - 1}{x |\mathcal{A}| - 1}\).
+
+This idea turned out to be horribly misleading!
+
+The problem is that although low overspill guarantees that you will fairly accurately pick \(i\) when you draw \(i\),
+getting to low overspill is not what you need to get out of the loop iteration!
+It may well be that the true value is \(0\) but the initial estimate of the upper bound is really large.
+We will \emph{never} get the overspill low unless we manage to prove the upper bound is \(0\),
+but we don't need to---we just need to get the upper bound below the value we drew.
+
+Here's an idea that might be worth pursuing:
+The idea is that either the problem ``find the shortest path to an accepting state'' is mostly tractable or \emph{everything} we could do is hard.
+
+Idea! Rather than having a generic \(u(x)\),
+let's make this more concrete.
+
+Given a language \(\mathcal{L}\) define the \emph{growth} of the langauge as \(g(\mathcal{L}) = \lim\sup \frac{\log |\{x \in \mathcal{L}: |x| = n\}|}{n}\).
+Necessarily the growth is at most \(|\mathcal{A}|\).
+i.e. \(g(\mathcal{L}) \leq h\) iff asymptotically \(|\{x \in \mathcal{L}: |x| = n\}| \leq h^n\).
+
+The Boltzmann generating function is defined for any \(x < \frac{1}{g(\mathcal{L})}\) and undefined for any \(x > \frac{1}{g(\mathcal{L})}\).
+
+Necessarily the languages of growth at most \(h\) are closed under differentiation:
+If not, the set of strings starting with the differentiated prefix would eventually come to dominate the growth.
 
 \chapter{Miscellaneous Literature Review}
 
