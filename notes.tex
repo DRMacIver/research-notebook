@@ -945,6 +945,12 @@ the idea here is that we are using the DFA to guide some fuzzing process then we
 and the table rebuilding process is something we only do when things go wrong,
 and performing \(256 m\) queries each time is hugely undesirable.
 
+Note: This is very like ``Query Learning of Regular Languages over Large Ordered Alphabets''\cite{Kaizaburo2017LearnAut},
+so certainly isn't a new category of idea,
+but their approach is to try to learn intervals.
+The set of discernible intervals may be much larger than the set of discernible sets,
+so I don't think this is actually a good idea except in the sense that their approach scales to much larger alphabets when it works.
+
 \section{L* with guessing}
 
 I haven't quite pinned down what I mean by this,
