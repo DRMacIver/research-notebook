@@ -22,6 +22,7 @@
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
 
+\newtheorem{definition}{Definition}
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
@@ -336,10 +337,97 @@ The Boltzmann generating function is defined for any \(x < \frac{1}{g(\mathcal{L
 Necessarily the languages of growth at most \(h\) are closed under differentiation:
 If not, the set of strings starting with the differentiated prefix would eventually come to dominate the growth.
 
+\section{Boltzmann Sampling of Unknown PRNG Languages}
+
+Basic idea:
+
+\begin{definition}
+A PRNG language over some alphabet \(\mathcal{A}\) (typically \(\{0, \ldots, 255\}\)) is a prefix-free language \(\mathcal{L}\) with the property that every finite string \(s\) either \(st \in \mathcal{L}\) for some \(t\) or \(s = wt\) for some \(w \in \mathcal{L}\).
+\end{definition}
+
+Intuitively these are the strings read by some randomized function in its execution,
+where we require the randomized function to have the property that it always has a non-zero probability of terminating.
+
+The Boltzmann Sampler of parameter \(\frac{1}{|\mathcal{A}|}\) corresponds to the operation of reading a uniform infinite string and taking its prefix from the language.
+However, this may not be well defined!
+
+Constructing a Boltzmann Sampler for such a language can thus be thought of as ``taming'' unbounded random generators,
+as they will be well defined for any \(x < \frac{1}{|\mathcal{A}|}\) while sharing many of the same properties---in
+particular being uniformly distributed among anything with the same size.
+
+I'm considering the following algorithm:
+
+\begin{itemize}
+\item Run enough of the normal random sampler through L* to get a good (lazy!) DFA for the language.
+\item Simulate a Boltzmann Sampler for that language.
+\end{itemize}
+
+The core question is basically how accurate that Boltzmann Sampler is after some amount of L*.
+We can correct the Boltzmann Sampler whenever it gets it wrong,
+but we don't necessarily expect that to improve matters enough---it will improve the automaton to reject more strings,
+but that won't necessarily cause it to accept more strings.
+
+One thing that might help is the idea of a \emph{terminating sequence}.
+
+\begin{definition}
+A terminating sequence for a language \mathcal{L} is a (possibly infinite) sequence \(t \in \mathcal{A}^{\leq \omega}\) such that for any word \(w \in  \(\mathcal{A}^{\leq \omega}\), \(wt\) starts with a word of \(\mathcal{L}\).
+\end{definition}
+
+\begin{theorem}
+Every PRNG language has a terminating sequence.
+If the PRNG language is represented by a finite automaton of size \(n\) then it has a terminating sequence of length at most \(\frac{n(n - 1)}{2}\).
+\end{theorem}
+
+\begin{proof}
+Let \(w_1, \ldots, w_n, \ldots\) be some enumeration of \(\mathcal{A}^{\leq \omega}\) and define \(t_n\) as follows:
+
+\(t_0 = \epsilon\).
+If \(w_n t_{n - 1}\) starts with some string in \(\mathcal{L}\),
+\(t_n = t_{n - 1}\).
+Otherwise,
+because \(\mathcal{L}\) is a PRNG language,
+\(w_n t_{n - 1} s \in \mathcal{L}\) for some \(s\).
+Let \(t_n = t_{n - 1} s\).
+
+Now define \(t\) as the ``limit'' of the \(t_n\):
+If this process is eventually constant, \(t\) is just that constant value.
+Otherwise \(t\) is an infinite sequence where \(t_i = {(t_n)}_i\) for sufficiently large \(n\).
+
+If \(\mathcal{L}\) is regular we can use this process to construct a terminating sequence of size \(n^2\):
+We only need to enumerate strings leading to each non-terminal state,
+so there are only \(n - 1\) of them.
+Order them as \(s_0, \ldots, s_n\) in order of increasing length of shortest path from the terminal state (so \(s_0\) is that state).
+Necessarily the shortest path from \(s_i\) to the terminal state is at most \(i\)---if not it could not reach any state closer to it,
+and so there is no extension of it in the language (contradicting that this is a PRNG language).
+Thus we can construct our \(t_i\) above so that \(t_{i + 1} \leq t_i + i\),
+and so the final length is \(t_n \leq \sum\limits_{i = 0}^{n - 1} i = \frac{n(n - 1)}{2}\)
+
+\end{proof}
+
+The bound \(\frac{n(n - 1)}{2}\) is tight if \(|\mathcal{A}| \geq n\):
+Let \(a_i\) be some enumeration of the alphabet and \(s_i\) some enumeration of the states with \(s_n\) the terminal state.
+Define transitions such that \(a_i\) causes \(s_i\) to transition to \(s_{i + 1}\) and for \(j \neq i\),
+\(a_j\) causes \(s_i\) to transition to \(s_1\).
+
+Note: In Hypothesis we assume that \(t = 0\ldots\) is a terminating sequence.
+
+(I haven't actually checked that this works, but I'm pretty sure it does).
+
+If we can efficiently find the initial prefix of some infinite sequence in the language (we typically can) we can use terminating sequences to do a sort of large fan-out version of L*,
+where instead of classifying a string based on whether \(se \in \mathcal{L}\) we define the function \(f(s) = |w| - |s|\) where \(w\) is the unique prefix of \(st\) that is in \(\mathcal{L}\).
+We then distinguish two states with respect to an experiment if \(f(se) \neq f(s'e)\).
+This will tend to give us a very accurate picture of the automaton!
+
+We can even do this if \(t\) isn't really a terminating sequence as long as it has a decent chance of terminating any string,
+if we have an easy way of determining \(f_m(x) = \min(f(x), m)\) (which, again, we usually do).
+
+For many PRNG languages this likely allows us to determine a perfect representation of the automaton without ever requiring a counter-example!
+
 \chapter{Miscellaneous Literature Review}
 
 This chapter is ``mostly'' literature review,
 with the occasional sprinkling of my own work and ideas in it as they seem to fit.
+
 
 \section{Inference of Finite Automata}\label{sec:langinference}
 
