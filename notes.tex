@@ -27,6 +27,9 @@
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 \newtheorem{theorem}{Theorem}
+\newtheorem{example}{Example}
+\newtheorem*{claim}{Claim}
+
 
 % lstlisting macros
 \lstset{
@@ -1469,6 +1472,824 @@ In particular~\cite{DBLP:conf/icst/PouldingF15, DBLP:conf/issre/FeldtP13, DBLP:c
 \item Inference of regular languages using state merging algorithms with search\cite{DBLP:journals/pr/BugalhoO05}.
 \item Hitting Families of Schedules for Asynchronous Programs\cite{DBLP:conf/cav/ChistikovMN16}
 \end{itemize}
+
+\chapter{Topological Barriers to Decision Making}
+
+This is a dump of an old draft paper I wrote that never really went anywhere.
+I still think it has some interesting ideas so I thought I'd include it here.
+
+Its core message is that the idea of Von Neumann-Morgenstern rationality is aphysical,
+and that even a logically omniscient agent cannot exhibit it if it is required to make only finitely many observations of the world.
+
+This paper shows that the Von Neumann-Morgenstern axiomatization of rationality
+cannot correctly model logically omniscient agents who lack a priori
+knowledge of the consequences of their choices but must instead determine
+those consequences through experimentation.
+
+I show that under some very mild restrictions on the behaviour of the agent
+and the experiments available to it, topological considerations guarantee
+that to an external observer that knows the the true probabilities of outcomes,
+such an agent will always exhibit behaviour that appears irrational.
+
+In particular I will show that for any agent limited to performing only a finite
+(but possibly unbounded) number of experiments chosen from some countable set:
+
+\begin{itemize}
+\item If the experiments satisfy a very weak naturalness requirement, the agent
+cannot exhibit \textit{any} utility function.
+\item If the experiments satisfy a slightly stronger naturalness requirement,
+the agent will exhibit a rather
+pleasing continuity property that is very different from the behaviour exhibited
+by a VNM rational agent.
+\item ``Most'' utility functions are impossible for the agent to exhibit.
+\end{itemize}
+
+All of these results hold regardless for any agent, regardless of whether
+its true underlying preferences are rational or not.
+
+\section{Agent Design}
+
+In this article I follow the set up of the Von Neumann-Morgenstern (henceforth,
+VNM) theorem:
+
+There is a finite set of outcomes $\mathcal{O} = \{O_1, \ldots, O_k\}$, and
+an agent is given the opportunity to express preferences over lotteries (probability
+distributions) over these outcomes.
+
+That is, we have the set $\mathcal{L} = \{p \in \mathbb{R}^k, p_i \geq 0, \sum p_i = 1\}$,
+and given \(U, V \in \mathcal{L}\), the agent must specify which of the two
+it ``prefers''.
+
+The VNM theorem says that under some reasonable assumptions,
+any consistent set of preferences must take the form of computing and comparing
+the expected value of some utility function. That is, the agent has a function
+$\nu : \mathcal{O} \to \mathbb{R}$, and picks the lottery corresponding to whichever
+of $E(\nu(U))$, $(E(\nu(V))$ is higher, or expresses indifference between the two.
+
+Commonly this is viewed as expressing a preorder $\preceq$ over lotteries. For
+the purpose of this article it will be convenient to instead view it as a function
+which returns a choice. That is, we have some choice set $\mathcal{D} = \{L, R, I\}$,
+where $L, R, I$ are distinct atoms that are interpreted to mean ``Pick the left hand lottery'',
+``Pick the right hand lottery'' and ``I don't care, pick either one''. An agent
+then defines a decision function $d: \mathcal{L}^2 \to \mathcal{D}$.
+
+The VNM theorem is primarily concerned with logically omniscient agents with
+perfect information: The agents are entirely aware of the probabilities, and are
+fully capable of thinking through all implications of their preferences up front
+and enforcing any consistency requirements, no matter how complicated.
+
+In the model I will consider here, the agent may still be logically omniscient
+but no longer has perfect information. In particular the agent making the choice
+does not have direct access to the lotteries, and must instead make a decision based on
+observing experimental outcomes that are derived from them:
+
+\begin{definition}
+An experimental model is a sequence of random variables 
+$E^{p, q} = (E^{p, q}_1, E^{p, q}_2, \ldots, E^{p, q}_n, \ldots)$, where
+$(p, q) \in \mathcal{L}^2$ and the $E^{p, q}_i$ take values in some finite
+sets $\mathcal{E}_i$. Let $\mathcal{E} = \prod \mathcal{E}_i$.
+
+The $E^{p, q}_i$ may not necessarily be independent.
+
+An agent is a partial function
+$d: \mathcal{E} \to \mathcal{D}$ such that:
+
+\begin{itemize}
+\item $P(d(E^{p, q}) \text{is defined}) = 1$ for any $p, q$.
+\item For any $x \in \mathcal{E}$ where $d(x)$ is defined
+there is some $n$ such that if $d(y)$ is defined and $y_i = x_i$
+for $i \leq n$ then $d(x) = d(y)$.
+\end{itemize}
+
+An agent is called total if it is defined for any element of $\mathcal{E}$.
+\end{definition}
+
+You can imagine an agent as a machine which repeatedly picks from the
+following moves:
+
+\begin{itemize}
+\item Run a new experiment and observe its output.
+\item Halt and return an answer in $\mathcal{D}$.
+\end{itemize}
+
+With the requirement that the agent is defined with probability $1$ being
+equivalent to the requirement that the agent always halts.
+
+This condition is equivalent to requiring that the agent be a continuous
+function when the $\mathcal{E}_i$
+and $\mathcal{D}$
+are given the discrete topologies and $\mathcal{E}$
+is given the usual product topology.
+
+The definition of an agent as a function means that we are only considering
+deterministic agents, but this is fairly harmless: If we imagine an agent
+making the above moves with an additional move available to it of making
+a non-deterministic choice, we can simply parametrize it by some fixed
+external source of non-determinism and consider the resulting deterministic
+agent (or, indeed, include the non-determinism in the experiments available
+to it).
+
+Given such an agent, what does it mean for the agent to be rational?
+
+\begin{definition}
+Given a utility function $\nu$, the decision function $k_\nu(p, q)$ returns
+$L$ if $E(\nu(p)) > E(\nu(q))$, $R$ if $E(\nu(p)) < E(\nu(q))$, or otherwise
+$I$. i.e. it picks whichever of the lotteries gives the highest expected
+value.
+
+An agent $d$ models $\nu$ if 
+for all $p, q$, $P(d(E^{p, q}) = k_\nu(p, q)) = 1$. i.e. based on its
+experimental observations it determines enough information about the underlying
+lotteries to calculate the correct answer for that utility function
+
+The agent weakly models $\nu$ if equality need only hold when $k_\nu(p, q) \neq I$.
+i.e. the agent is allowed to choose arbitrarily when the correct answer is
+indifference. Such an agent will still make decisions which maximize $\nu$ because
+it will only make an different choice from a rational agent when the the
+choice it makes doesn't matter. In particular the expected utility of its choice
+is identical to that of a rational agent.
+
+If an agent correctly models some utility function then it is called rational.
+If it weakly models some utility function it is called weakly rational.
+\end{definition}
+
+Some agents aren't very interesting:
+
+\begin{definition}
+An agent is called trivial if it always constantly returns the same answer.
+\end{definition}
+
+Note that a rational agent modelling a constant utility function is trivial,
+and this is the only trivial VNM rational agent.
+
+Unfortunately it will turn out that agents modelling a utility function
+are very much the exception and not the norm.
+
+\section{Physically Plausible Agents}
+
+We'll start by analysing some conditions on experiments that are required
+to make them correspond to physically plausible knowledge about the world.
+In the next section we'll then see what happens if we relax some of these
+assumptions.
+
+The character of experiments in the physical world is that they only ever
+give you a finite amount of precision: That is, they never allow you to
+\textit{precisely} determine a value $x$,
+only that $||x - y|| < \epsilon$
+for some $y, \epsilon$,
+or, equivalently, that $x$
+is a member of some open set.
+
+So the appropriate notion for our experiments being physically plausible
+is that if an agent ever witnesses a result it can only place the true
+value to within some open set:
+
+\begin{definition}
+Call a set of experiments ``natural'' if for any finite sequence
+$e_1, \ldots, e_n$,
+the set $\{(p, q): P(\forall i \leq n, E^{p, q}_i = e_i) > 0\}$
+is an open subset of $\mathcal{L}^2$.
+\end{definition}
+
+As we'll see shortly, weak rationality requires agents to perform
+unnatural experiments.
+
+But first note that no non-trivial natural set of experiments is
+deterministic.
+
+\begin{theorem}
+If $E^{p, q}$
+are a natural set of experiments such that for any $p, q$
+there is some $t^{p, q}$
+with $P(E^{p, q} = t^{p, q}) = 1$.
+Then the value $t^{p, q}$
+does not depend on $p, q$.
+\end{theorem}
+
+\begin{proof}
+
+Fix $n$.
+
+For $e \in \mathcal{E}_n$, let $A_e = \{(p, q): t^{p, q}_i = e\}$.
+
+By naturalness this is an open set (it is a union of open sets over
+all possible values for the first $n - 1$ elements of the sequence).
+
+Further, if $e \neq d$ then $A_e \cap A_d = \emptyset$
+by the definition of $A_e$.
+
+Also, $\bigcup A_e = \mathcal{L}^2$
+(because $(p, q) \in A_{t^{p, q}_n}$).
+
+But $\mathcal{L}^2$
+is connected, so it cannot be partitioned into disjoint non-empty
+open sets. Thus all but one of these sets must be empty and we have
+that $t^{p, q}_n$
+takes the same value for all $p, q$.
+
+$n$
+was arbitrary, so we must have that $t^{p, q}$
+takes the same value for all $p, q$.
+\end{proof}
+
+We'll see that this non-determinism is insurmountable, and agents cannot
+hope to compensate for it adequately to be even weakly rational.
+
+First we'll need a tool for analysing the structure of agents.
+
+\begin{definition}
+For any agent $d$, a trace of $d$ is a finite sequence $t = (t_1, \ldots, t_n)$
+such that:
+
+\begin{itemize}
+\item $d$ is defined for at least one infinite extension of $t$.
+\item $d$ is constant on the set any $x$ such that $d(x)$ is defined
+and $d_i = t_i$ for all $i \leq n$
+\item No proper prefix of $t$ has the above properties.
+\end{itemize}
+
+The value of a trace $t$ (for $d$) is the unique output that $d$ assigns to any
+sequence starting with $t$.
+\end{definition}
+
+You can think of traces as being the point at which an agent that is repeatedly
+drawing experiments stops and terminates.
+
+\begin{proposition}
+If $d(x)$
+is defined then $x$
+starts with a unique trace of $d$.
+\end{proposition}
+
+\begin{proof}
+To see that any such trace is unique, note that by minimality no
+trace is a proper prefix of another, so $x$
+can only start with at most one trace.
+
+By assumption there is some $n$
+such that for any $y$
+with $d(y)$
+defined, if $x_i = y_i$
+for $i \leq n$
+then $d(x) = d(y)$.
+
+Let $n$
+be minimal with that property. Then $x_1, \ldots, x_n$
+is a trace by definition.
+\end{proof}
+
+\begin{theorem}
+If $d$ is a non-trivial agent performing natural experiments
+then there is an open set $U \subseteq \mathcal{L}^2$
+such that for $(p, q) \in U$,
+there are two different values $c \neq c'$
+such that $P(d(E^{p, q}) = c) > 0$
+and $P(d(E^{p, q}) = c') > 0$.
+
+i.e. the agent is non-deterministic on some open set.
+
+In particular if an agent performing natural experiments is
+weakly rational then it is trivial.
+\end{theorem}
+
+\begin{proof}
+Let $d$ be any agent using the experimental model. 
+
+As before the sets
+$A_c = \{(p, q): P(d(E^{p, q}) = c) > 0\}$
+are a cover of $\mathcal{L}^2$
+
+But these sets are open:
+
+$A_c = \bigcup\limits_t \{(p, q): P(d(E^{p, q}) \text{ starts with $t$}) > 0\}$
+
+where $t$
+ranges over the traces of $d$
+that have value $c$.
+
+Each of the sets in this union are open by the naturalness requirement,
+so $A_c$ is a union of open sets and thus open.
+
+But $\mathcal{L}^2$
+is a connected topological space, which means it cannot
+be partitioned into disjoint open sets. So either two of these sets are empty
+(which means one of these sets must be the whole set and $d$
+constantly takes that value) or two of them intersect. i.e. we can find some
+$c \neq c'$
+with $A_c \cap A_{c'} \neq \emptyset$.
+
+As required, for any value in this set it returns either of $c$
+or $c'$
+with non-zero probability, and it is a finite intersection of open sets
+and so open.
+
+The ``in particular'' follows because the set of points to which a non-constant
+utility function  is indifferent has empty interior (you can always move
+an infinitesimal amount in the direction of preference), so the
+above set cannot be contained within it. Thus there is some point
+to which the utility function is not indifferent to which the agent assigns
+more than one possible outcome.
+\end{proof}
+
+In case the ``natural" requirement seems too strong, note that the following
+two examples satisfy it.
+
+\begin{example}
+Let $t \in (0, \frac{1}{2})$.
+
+Let $U_i$
+be some enumeration of a basis for the topology of $\mathcal{L}^2$
+(e.g. balls with rational radius and rational coordinates)
+and let $E^{p, q}_{i, j}$
+be independent random variables such that if $(p, q) \in U_i$
+they return $0$ or $1$
+with equal probability
+and if $(p, q) \not\in U_i$
+they constantly return $0$.
+The $j$ serve to force each $U_i$ to appear a countably infinite
+number of times and have no other affect on the distribution.
+
+This is natural because for any finite sequence $t_1, \ldots, t_n$
+the set of values for which it is possible is the intersection of
+the $U_i$
+for which $t_{i, j} = 1$
+for some $j$
+(with an empty intersection being the whole set).
+\end{example}
+
+This example is particularly interesting for the following reason:
+
+\begin{proposition}
+There is a set $A \subseteq \{0, 1\}^{\mathbb{N}}$
+and a continuous function $f: A \to \mathcal{L}^2$
+such that for all $p, q$
+$P(E^{p, q} \in A) = 1$
+and $P(f(E^{p, q}) = (p, q)) = 1$
+\end{proposition}
+
+\begin{proof}
+Let $A_{p, q}$
+be the subset of $\{0, 1\}^{\mathbb{N}}$
+such that $e_{i, j} = 1$
+for some $j$
+if $(p, q) \in U_i$.
+
+Then $P(E^{p, q} \in A_{p, q}) = 1$,
+because the probability of infinitely many Bernoulli random variables all
+turning up $0$
+is $0$,
+so the complement of $A_{p, q}$
+is a countable union of probability $0$
+sets and thus itself probability $0$.
+
+So if $A = \bigcup A_{p, q}$
+then certainly $P(E^{p, q} \in A) = 1$.
+
+Define $f(e)$
+to be the unique element of $\bigcap \{U_i: \exists j, e_{i, j} = 1\}$
+
+This intersection is non-empty because for \(x \in A_{p, q}\)
+we have $(p, q)$
+in the intersection, and unique because for $(p, q) \neq (p', q')$
+there is some $U_i$
+containing one but not the other. Similarly the fact that $(p, q)$
+is in the intersection shows that $f(e) = (p, q)$
+for $e \in A_{p, q}$
+and we've already shown that $P(E^{p, q} \in A_{p, q}) = 1$.
+
+This function  is continuous: Suppose $U_i \ni (p, q)$
+and $f(x) = (p, q)$.
+
+Then $x_{i, j} = 1$
+for some $j$.
+
+Thus the set $V = \{e: e_{i, j} = 1\}$
+is an open neighbourhood of $x$
+with $f(V) \subseteq U_i$.
+\end{proof}
+
+So in this example we have a continuous function that with probability $1$
+recreates the original values of the lottery, but this is still not
+sufficient to make a decision accurately.
+
+Note that $V$ is open even if we give $\{0, 1\}$
+the Sierpinski topology (where the only non-trivial open set
+is $\{1\}$),
+as are the sets that we used to prove that this was natural,
+so this example works even if we weaken the condition that
+the topology on the experimental outcomes is discrete.
+
+\begin{example}
+Let $E_k$ be an independent series of random variables which each sample from the two
+lotteries, returning a value in $\mathcal{E}_k = \mathcal{O}^2$.
+
+That is, our agent can simulate
+the outcomes as many times as it wants, it just can't know the exact probabilities.
+
+This is natural because the probabilities of initial sequences are all
+polynomial in $p, q$.
+The law of large numbers guarantees we can use this to approximate $p, q$
+with high precision and high probability.
+\end{example}
+
+i.e. the model subsumes both the case where we can measure  the lotteries to arbitrary
+precision with a small chance of error and the case where we can sample from the
+lotteries an arbitrary number of times.
+
+Both of these models allow you to approximate the true lotteries to any
+finite level of precision with any probability arbitrarily close to (but not exactly
+equal to) $1$.
+
+Both of these are substantially more powerful measurements than we can hope to have in
+most realistic scenarios, so this model should be more than sufficient to define some
+bounds on the behaviour of agents.
+
+The second actually satisfies a much stronger criterion than our naturalness
+requirement:
+
+\begin{definition}
+If for all finite sequences $e_1, \ldots, e_n \in \mathcal{E}_1 \times \ldots \times \mathcal{E}_n$
+the functions $(p, q) \to P(\forall i \leq n, E_i = e_i)$ are continuous then 
+the experimental model is called a sampling model.
+\end{definition}
+
+Certainly any sampling model is natural (because the sets defining the naturalness
+requirement are then the preimage of open sets under a continuous function).
+
+The first gives an example of a natural model which is not sampling: The probabilities
+change discontinuously as you cross the boundary of one of the defining balls.
+
+Sampling models obey quite a strong continuity requirement that no
+VNM rational agent satisfies.
+
+First we'll need a technical lemma.
+
+\begin{lemma}
+Let $t_i$ be the traces of some agent. Then 
+$\sum\limits_i P(E^{p, q} \text{starts with $t_i$}) = 1$.
+\end{lemma}
+
+\begin{proof}
+Because of the observation that no trace appears as the prefix of another, these are disjoint events.
+
+That means this sum is $P(E^{p, q} \text{starts with any trace})$.
+But if an agent terminates on a sequence of experiments then the
+sequence must start with a trace - just pick the shortest prefix of that value
+after which the agent is constant.
+
+Therefore this is
+$P(\text{the agent terminates when experiments are drawn from $E^{p, q}$ })$,
+which is defined to be equal to $1$.
+\end{proof}
+
+\begin{theorem}
+For an agent $d$
+using a sampling model, for each $c \in \mathcal{D}$
+the function $f_c(p, q) = P(d(E^{p, q} = c)$
+is continuous function $f_c: \mathcal{L}^2 \to [0, 1]$.
+\end{theorem}
+
+\begin{proof}
+Let $t_1, \ldots, t_k, \ldots$
+be a (possibly finite) enumeration of all the agent's traces.
+
+Now, let $u_i = 1$ if given the trace $t_i$ the agent outputs $c$, else $u_i = 0$.
+
+We have $f_c(p, q) = \sum u_iP(E^{p, q} \text{starts with $t_i$})$, because any value that starts with trace $t_i$ must have the same output.
+
+Now we just need to show this sum is continuous.
+
+Fix $p, q$.
+Pick some $N$ such that $\sum\limits_{i \geq N} P(E^{p, q} \text{ starts with } t_i) < \frac{1}{3}\epsilon$
+(such an $N$
+must exist because $\sum P(E^{p, q} \text{ starts with } t_i) = 1$).
+
+Now, each $P(E^{p, q} \text{ starts with } t_i)$
+is continuous by assumption of continuous experiments, so the sum
+$\sum\limits_{i < N} u_i P(E^{p, q} \text{ starts with } t_i $
+is also continuous.
+
+Pick $\delta$
+so that if $(p', q') \in B((p, q), \delta)$
+then this sum changes by no more than $\frac{1}{3}\epsilon$.
+
+But then the difference in $f_c$ can be no more than $\epsilon$:
+The initial sum changes by no more than $\frac{1}{3}\epsilon$,
+which means the tail can change by no more than $\frac{1}{3}\epsilon$,
+which in turn means that the new tail has magnitude at most $\frac{2}{3}\epsilon$.
+Thus the value of $c$ can only have changed by
+$\frac{1}{3}\epsilon + \frac{2}{3}\epsilon = \epsilon$.
+$p, q, \epsilon$
+were all arbitrary, thus we have proved that $f_c$ is continuous.
+\end{proof}
+
+No non-trivial VNM rational agent can satisfy this criterion, because
+for a VNM rational agent the only valid probabilities this can take on either
+side of the indifference boundary are $0$ and $1$. The decision boundary is in the
+closure of each half, so the only values it can take on the boundary are $0$
+and $1$. Therefore by continuity any VNM rational agent with this property must
+assign one outcome with probability $1$ everywhere and so is trivial.
+
+Sampling models hint at an interesting alternate basis for modelling
+rational behaviour mediated by experiments, suggesting that a better
+model is that rather than considering discrete decision functions
+we instead consider a random variable choosing between the two with
+some probability. The theory then becomes more analogous to that
+of multi-armed bandits than of classic VNM rationality.
+
+I leave the question of how the two relate for future research.
+
+\section{Non-Physical Agents}
+It is worth exploring how much the ``natural'' criterion restricts the
+set of agents that are available to us, and how weakening it could
+permit more agents.
+
+We'll find that even with much weaker conditions,  the ability of even
+quite powerful sets of experiments to represent utility functions is quite limited,
+but that with unnatural experiments we can at least define some rational agents.
+
+In particular, we can model utility functions from any countable set just fine:
+
+\begin{example}
+For any countable set of utility functions \(\nu_i\) (e.g. all utility functions
+with integer valued weights) define an experimental model for $\nu_i$
+as follows:
+
+Let \(\mathcal{E}_i = \mathcal{D}\), and let $E_i$ deterministically return the
+correct answer for the current lotteries under $\nu_i$.
+
+Given such an experiment, the agent that just returns $E_i$ correctly models $\nu_i$.
+\end{example}
+
+This is the best we can do:
+
+\begin{theorem}
+Any experimental model has agents correctly modelling at most countably
+many inequivalent utility functions. 
+\end{theorem}
+
+\begin{proof}
+The idea of this proof is to use the linear structure of utility functions
+acting on lotteries as follows. We'll show that you can reconstruct the
+set of lotteries to which a utility function is indifferent from its
+values on only finitely many values drawn from traces of agents representing
+it. There are only countably many possible traces, and therefore only
+countably many possible sets of indifference which can be
+represented by agents.
+
+But if two utility functions represent the same set of indifference, they
+are either equivalent or opposite. Therefore there are are at most
+countably many inequivalent utility functions represented by agents.
+
+We'll now show how to recover the set of indifference from an agent
+representing the utility function.
+
+A non-constant utility function $\nu$ defines a linear functional
+$\lambda: \mathbb{R}^N \to \mathbb{R}$ by $\lambda(x) = \sum \nu_i x_i$.
+
+$k_\nu$ is indifferent between $p$ and $q$ whenever $\lambda(p - q) = 0$.
+
+But this kernel forms a linear subspace of $\mathbb{R}^N$ of codimension $1$.
+
+So we can find linearly independent vectors $u_1, \ldots, u_{N-1}$ which span
+the space. By picking some non-zero element of the kernel and subtracting a
+multiple of it from each we can assume that $\sum\limits_j (u_i)_j = 0$ for
+all $i$.
+
+We can now use the $u_i$ to construct $N - 1$ lotteries $p_i, q_i$ between
+which $d_\nu$ is indifferent such that the $p_i - q_i$ are all linearly
+independent.
+
+To do this, simply define $p_i = t + \frac{\epsilon} u_i$,
+$q_i = t - \frac{\epsilon} u_i$, where $t$ is the uniform vector
+$(\frac{1}{N}, \ldots, (\frac{1}{N})$, and $\epsilon > 0$ is any
+sufficiently small number to keep all the coordinates within the bounds
+$[0, 1]$.
+
+Then the differences are $p_i - q_i = 2\epsilon u_i$, so these span the
+kernel as desired.
+
+We can now use this construction to label any VNM rational agent.
+
+Let $d$ be such an agent for utility function $\nu$.
+
+We know from the above that there exist $N - 1$ pairs of lotteries $(p_i, q_i)$
+whose differences are linearly independent and such that
+$P(d(E^{p_i, q_i} = I) = 1)$.
+
+Pick any such $p_i, q_i$ and let $t_i$ be a trace that occurs in $E^{p_i, q_i}$
+with non-zero probability.
+
+Then the set $\{t_i\}$ uniquely identifies the set of lotteries to which
+$\nu$ can be indifferent, because it must be indifferent to each of the $p_i, q_i$,
+as $t_i$ occurs there with non-zero probability so if $t_i$ is present
+in its set then it must return indifference with non-zero probability and
+thus probability $1$ (because a rational agent always returns the same
+answer with probability $1$).
+
+But therefore given such a set the $p_i - q_i$ are a set of $N - 1$ linearly
+independent vectors in the kernel of $\lambda_\nu$, and so span the whole Kernel.
+
+There are only countably many such sets (because the set of finite sequences is
+countable, and the set of finite subsets of a countable set is countable), and
+at most two inequivalent utility functions have the same set assigned to them,
+so the set of equivalence classes of utility functions represented by agents
+is at most countable.
+
+\end{proof}
+
+Note that despite this, experimental models will often have uncountably many
+inequivalent agents:
+
+Let $u \in \mathcal{D}^\mathbb{N}$
+and consider the experimental setup where
+$\mathcal{E}_i = \{0, 1\}$
+and the $E_i$
+are independent Bernoulli random
+variables with parameter $\frac{1}{2}$.
+Then the agent $\alpha_u$
+that returns $u_i$
+where $i$
+is the first index with value $1$
+is defined for every sequence of values except for the one that is
+constantly zero, so it is defined with probability $1$
+but if $u \neq v$
+then for some $i$,
+$u_i \neq v_i$
+and so $\alpha_u(t) \neq \alpha_v(t)$
+whenever $t$
+starts with $i - 1$
+$0s$
+followed by a $1$
+(which happens with probability $2^{-i} > 0$)
+so the two agents are not equivalent.
+
+This example also has another important property: There are only countably
+many agents that are defined on all of $\mathcal{E}$,
+so the definition of agents as \textit{partial} functions was a strict
+improvement in generality:
+
+\begin{theorem}
+Let $F \subseteq \mathcal{E}$
+be a closed set.
+
+There are at most countably many distinct agents (up to equality on $F$)
+which are fully defined on all of $F$.
+\end{theorem}
+
+\begin{proof}
+Let $d$ be an agent which is defined for all of $F$.
+
+For $t = (t_1, \ldots, t_n)$
+a finite sequence let $A_t = \{ x \in F : x \text{ starts with } t\}$.
+
+This is an open set in $A^{\mathbb{N}}$ with the product topology.
+
+But the definition of continuity means that
+$F = \bigcup \{A_t: d \text { is constant on } A_t \}$.
+
+$\mathcal{E}$
+is compact by Tychonoff's Theorem, so $F$
+is a closed subset of a compact space and thus compact. 
+
+This is an open cover of $F$
+and thus by compactness has a finite subcover.
+
+Let $n$ be some number longer than the longest $t$ in that subcover. Then for
+any $x, y$ if $x_i = y_i$ for $i \leq n$, $x$ and $y$ must start with some
+common $t$ from that subcover and thus must have the same value.
+
+Therefore $d$ is entirely defined by the choice of $n$ and some function
+$d_n: \mathcal{E}_1 \times \ldots \times \mathcal{E}_n \to \mathcal{D}$.
+There are only countably many choices
+of $n$ and only finitely many choices of $d_n$ given $n$, so the set of
+possible agents is a countable union of finitely many sets and thus is
+countable.
+\end{proof}
+
+The big difference between fully defined and partially defined agents that
+comes into play here is that compactness forces fully defined agents to
+inspect not merely a finite number of experimental outcomes but a \textit{bounded}
+number. In our above examples the closer we came to the missing point the
+more outcomes we had to examine to determine the answer. We would get
+the same behaviour if the agent were not fully defined but merely
+defined on any closed subset that occurs with probability $1$.
+
+Now, lets see what happens when we introduce a very small amount of uncertainty.
+
+In the experiments where we modelled utility functions, we got a three-way
+split---we could tell which side of the boundary we were on, and we could
+tell whether we were on the boundary.
+
+What happens if we introduce a slightly shaky hand at the boundary? i.e.
+when we're on a boundary value instead of always returning $I$ the experiment
+sometimes returns $L$ or $R$. The agent that always returns the experimental
+result is of course now only weakly rational, but can that indecision be
+recovered from?
+
+In a large class of cases, no:
+
+\begin{theorem}
+Suppose the experimental setup has the property that for any $t_1, \ldots, t_n$
+the set $\{(p, q): P(E^{p, q}_1 = t_1, \ldots, E^{p, q}_n = t_n) > 0\}$
+is closed.
+
+Any agent defined on some closed set has some $p, q$ where it is non-deterministic.
+i.e. has at least two values it can return with non-zero probability and thus is
+not rational.
+\end{theorem}
+
+\begin{proof}
+Let $d$ be such an agent. Then by the same compactness argument as for total
+agents there is some $n$ such that $d$ only depends on the first $n$ values of its input.
+
+Thus for any $c \in \mathcal{D}$,
+the set $A_c = \{(p, q): P(d(E^{p, q}) = c) > 0\}$
+is a union of at most $\prod\limits_{i \leq n} |\mathcal{E}_i|$
+sets of the form $\{(p, q): P(E^{p, q}_1 = t_1, \ldots, E^{p, q}_n = t_n) > 0\}$
+and therefore is a finite union of closed sets and so closed.
+
+But then $\bigcup A_c$
+is a cover of $\mathcal{L}^2$
+by finitely many closed sets. $\mathcal{L}^2$
+is connected, so these cannot be disjoint. i.e. there must be $c \neq c'$ 
+with $A_c \cap A_{c'} \neq 0$.
+
+Any $(p, q)$
+in that intersection can be assigned the values $c$ and $c'$
+by $d$
+with non-zero probability, so is the desired point.
+\end{proof}
+
+An agent in such a scenario can still be \textit{weakly} rational of course:
+Just take the example where the experiments are utility functions and add some
+small amount of uncertainty at the boundary.
+
+Although the fact that this only applies to total agents may give some hope,
+for many powerful classes of experiment all agents must be total:
+
+Another example of such a model is one where we can pick a binary representation for
+each $p_i, q_i$
+uniformly at random from the possibilities (i.e. deterministically for anything
+that isn't a dyadic rational and pick one of the two representations for each
+dyadic rational with equal probability) and then $E^{p, q}_i$ reads off the
+corresponding $2^{2N}$
+bits.
+
+Every possibly input sequence corresponds to some element of $(\mathbb{R^N})^2$,
+and the set which corresponds to an element in $\mathcal{L}^2$
+is a closed subset (because it's the continuous preimage of a closed subset).
+
+Moreover, every value in that subset appears with non-zero probability for some
+lottery: Every $(p, q)$
+has at most $2^k$
+possible values in $E^{p, q}$,
+where $k$
+is the number of coordinates which are dyadic rationals (of the form $\frac{m}{2^n}$),
+which it picks from uniformly, so every point appears with non-zero probability
+in its corresponding lottery, and thus every agent must be defined on the whole
+set.
+
+That is, we can measure where we are in the space with arbitrary precision and only
+a small amount of uncertainty where we are precisely on the boundary, but we
+still can't get rationality perfectly right and will sometimes declare a preference
+where we should be indifferent (and possibly vice versa).
+
+So although our naturality condition proved to be a reasonably strong restriction,
+even without it our options are quite limited: Without experiments designed with
+a priori knowledge of the agent's possible preferences, most rational agents
+cannot operate perfectly in an experimental setup, and even a small amount of
+uncertainty prevents agents from being more than weakly rational.
+
+Some open questions remain:
+
+\begin{itemize}
+\item Is there a set of experiments that permits uncountably many utility functions
+to be weakly modelled?
+\item Is there an example of a set of experiments such that the sets
+$\{(p, q): P(E^{p, q}_1 = t_1, \ldots, E^{p, q}_n = t_n) > 0\}$
+are closed, but there is nevertheless a rational agent? (by the above theorem
+such an agent cannot be defined on a closed set).
+\end{itemize}
+
+I regard these primarily as curiosities due to their dependence on unnatural experiments. 
+
+\section{Conclusion}
+
+I  have shown that agents under physically plausible assumptions, even logically
+omniscient agents cannot behave in a way that appears to be rational to an
+outside observer with perfect information.
+
+Even with the ability to perform unnatural experiments which give far more
+knowledge about the world than one might reasonably expect for more scenarios,
+the ability to behave rationally is still somewhat limited.
+
+Although this does not limit the behaviour of rational agents with perfect
+a priori knowledge about the consequences of their choices, or the ability of
+the Von Neumann-Morgenstern theorem to help discover the preferences of such,
+it does suggest that expected utility maximization is not a good model of how
+even logically omniscient agents should reason about the world, and suggest
+that we might want to seek other models.
 
 \bibliography{references}{}
 \bibliographystyle{acm}
