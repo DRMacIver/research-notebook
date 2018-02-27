@@ -27,7 +27,7 @@ This works because of the following observations:
 
 \begin{itemize}
 \item Given \emph{any} deterministic finite automaton,
-states can be uniquely labeled by a string that reaches that state from the origin.
+states can be uniquely labelled by a string that reaches that state from the origin.
 By constructing these labels iteratively we can ensure that the set of labels used is prefix closed.
 \item If two strings lead to the same state,
 then any extension of them by the same string must also lead to the same state.
@@ -39,7 +39,7 @@ If we ever observe that \(se \in \mathcal{L} \neq s'e \in \mathcal{L}\) then the
 
 This is the idea of the Myhill-Nerode theorem~\cite{nerode1958linear}\footnote{Confession:
 I have not read the cited paper,
-only the wikipedia page about it.
+only the Wikipedia page about it.
 }.
 
 L* search is essentially a way of learning the Myhill-Nerode automaton that results.
@@ -50,7 +50,7 @@ the second to expand \(E\).
 Given a fixed set of experiments we first \emph{complete} the automaton:
 For each \(s \in S\) and each \(c \in \mathcal{A}\) it tries to find a state in \(S\) that the current set of experiments thinks is equivalent to \(sc\).
 If it finds one (and it cannot find more than one,
-because we make sure to only enlarge \(S\) by adding inequivalent states to it),
+because we make sure to only enlarge \(S\) by adding nonequivalent states to it),
 we add a transition to that state.
 If not,
 we add \(sc\) to \(S\).
@@ -87,14 +87,14 @@ There is a lot of other information in this paper I need to go back and process 
 I should also write up its diversity based representation,
 as I think it's a nice framing of this.
 
-\section{DFA Minimization}
+\section{DFA Minimisation}
 
-``Fast brief practical DFA minimization''~\cite{DBLP:journals/ipl/Valmari12} is a really nice paper about this,
+``Fast brief practical DFA minimisation''~\cite{DBLP:journals/ipl/Valmari12} is a really nice paper about this,
 although the experience of reading code golfed C++ to fit in a two column format wasn't a huge amount of fun.
 
 It makes use of partition refinement,
 applied to not just the states but the transitions,
-beginning with a very coarse paritition that treats everything as equivalent and then progressively refining the partition whenever it finds an inconsistency.
+beginning with a very coarse partition that treats everything as equivalent and then progressively refining the partition whenever it finds an inconsistency.
 
 One thing I thought was interesting about it is the core algorithm \emph{looks} like one you should have to iterate to a fixed point,
 but actually it completes in a single run.

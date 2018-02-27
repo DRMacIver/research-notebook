@@ -25,11 +25,11 @@ If the equivalence oracle is super-precise that might mean ``exhibit exactly the
 but it also might just mean something coarser like ``exhibit the same coverage profile'' or even just something like \(X|c(X) = i\) has some markedly different category of behaviour than \(X\).
 
 The coupon collector problem, and in particular the bounds in Section~\ref{sec:couponbounds},
-show that what we really want is for the distribution of \(c(X)\) to be uniform if \(c\) is precise (or, at least, if the number of truly inequivalent examples in each partition is roughly the same).
+show that what we really want is for the distribution of \(c(X)\) to be uniform if \(c\) is precise (or, at least, if the number of truly nonequivalent examples in each partition is roughly the same).
 I'm pretty sure this is almost \emph{never} the case!
 
 I have a sneaking suspicion that a lot of why things like American Fuzzy Lop and libfuzzer work is that what they are doing is effectively shifting to a new random tester when the old one appears to be exhausted,
 and doing so in a way that the new random tester is complementary to the old one.
 Effectively what they are doing by picking a new seed is sampling from some approximation to the conditional distribution \(X|c(X) = i\).
-This is both potentially useful because it finds more of the inequivalent examples that could have been lurking in \(c(X) = i\) that were previously found with very low probability,
+This is both potentially useful because it finds more of the nonequivalent examples that could have been lurking in \(c(X) = i\) that were previously found with very low probability,
 but also simply because the new distribution is different enough from the old one that it is likely to have a different set of examples that it finds within reasonable time.
