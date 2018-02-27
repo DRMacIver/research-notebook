@@ -227,6 +227,45 @@ The Boltzmann generating function is defined for any \(x < \frac{1}{g(\mathcal{L
 Necessarily the languages of growth at most \(h\) are closed under differentiation:
 If not, the set of strings starting with the differentiated prefix would eventually come to dominate the growth.
 
+Actually, this is all needlessly complicated,
+and the solution here is the usual best solution:
+Make someone else do all the work.
+In this case by doing linear programming.
+
+We maintain a subset of the infinite set of linear constraints as follows:
+For each node associate LP variables \(v_i\).
+The LP is:
+
+\begin{enumerate}
+\item \(v_i \leq U[i]\)
+\item \(v_i \geq L[i]\)
+\item \(v_i - x \sum\limits_c v_{\delta(i, c)} = a(i)\)
+\end{enumerate}
+
+At any given time we track only a subset of the equality constraints.
+Say a node is \emph{active} if it is the \(v_i\) term in the current LP.\ 
+
+We can now define an iterative process \texttt{improve(i)} as follows:
+
+Initially, we activate \(i\).
+We now repeatedly perform the following operations:
+
+\begin{enumerate}
+\item Solve the current LP with \(\min v_i\).
+Set \(L[i]\) to its result.
+Activate the currently inactive \(j\) with the highest shadow price on its constraints.
+If no such \(j\) exists,
+we must have an exact LP.\ 
+Set \(U[i] = L[i]\) and stop.
+\item Repeat the above with \(U[i] = \max v_i\)
+\end{enumerate}
+
+This process should eventually terminate if the problem is well-posed:
+Eventually it will explore all nodes within distance \(k\) of \(i\) (because they should have higher shadow prices!),
+and after that point we know \(f_i\) to its first \(k\) terms.
+
+When it does we might as well run the LP a number of final times for each active node to update their minimum and maximum values as well so as to not have to do the slow exploration process each time in future.
+
 \section{Boltzmann Sampling of Unknown PRNG Languages}
 
 Basic idea:
