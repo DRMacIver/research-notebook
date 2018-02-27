@@ -2293,6 +2293,160 @@ it does suggest that expected utility maximization is not a good model of how
 even logically omniscient agents should reason about the world, and suggest
 that we might want to seek other models.
 
+\chapter{Some Lemmas (in Analysis)}
+
+These are some old notes I had about analysis.
+These are probably more indicative of what I used to care about than anything else,
+but I thought it might be interesting to transcribe them (the original PDF is in the pdfs directory of this repository).
+
+Apparently the following lemma comes up when defining topological entropy (I don't remember what topological entropy is\ldots):
+
+\begin{lemma}
+Let \(a_i\) be a sequence of real numbers such that \(a_{m + n} \leq a_m + a_n\).
+Then \(\lim\limits_{a_n \to \infty} \frac{a_n}{n} = \inf \frac{a_n}{n}\).
+\end{lemma}
+
+\begin{proof}
+Note that we have \(a_{kn} \leq k a_n\) by the additivity property.
+In particular \(\frac{a_{kn}}{kn} \leq \frac{a_n}{n}\).
+
+Let \(I = \inf \frac{a_n}{n}\).
+
+For any \(\epsilon > 0\) we can find \(N\) with \(\frac{a_N}{N} \leq I + \frac{1}{2}\epsilon\).
+
+For \(n \geq N\), write \(n = kN + r\) with \(0 \leq r < N\).
+Then
+
+\begin{align*}
+\frac{a_n}{n} &\leq \frac{a_{kN}{n}} + \frac{a_r}{n}\\
+&\leq \frac{a_{kN}{kN}} + \frac{N a_1}{n}\\
+&\leq I + \frac{1}{2} \epsilon + \frac{N a_1}{n}\\
+\end{align*}
+
+So if we pick \(N' = \max(N, \frac{2 N a_1}{\epsilon}) + 1\) the second term is \(< \frac{1}{2}\epsilon\),
+and so for \(n \geq N'\) we have \(I \leq \frac{a_n}{n} < \epsilon\).
+\end{proof}.
+
+\begin{lemma}{Cesaro's Lemma}
+Let \(b_n\) be a monotonic increasing sequence of real numbers such that \(b_n \to \infty\).
+Let \(x_n \to x\).
+Then \(s_n = \frac{1}{b_n} \sum\limits_{k = 1}^n (b_k - b_{k - 1}) x_n \to x\).
+\end{lemma}
+
+\begin{proof}
+Let \(\epsilon > 0\).
+Pick \(N\) such that whenever \(n \geq N\) we have \(|x_n - x| < \epsilon\).
+
+Let \(e_n = x - x_n\).
+
+Then 
+
+\begin{align*}
+s_n &= \frac{1}{b_n} \sum\limits_{k = 1}^n (b_k - b_{k - 1}) x_n\\
+&= \frac{b_{N - 1}}{b_n} s_{N - 1} + \frac{1}{b_n} \sum\limits_{k = N}^n (b_k - b_{k - 1}) (x + e_n) \\
+&= \frac{b_{N - 1}}{b_n} s_{N - 1} + \frac{1}{b_n} \sum\limits_{k = N}^n (b_k - b_{k - 1}) e_n + \frac{b_n - b_N}{b_n} x \\
+\end{align*}
+
+So for \(n \geq N\) we have:
+
+\begin{align*}
+|s_n - x| \leq \frac{b_{N - 1}}{b_n} s_{N - 1} + \frac{1}{b_n} \sum\limits_{k = N}^n (b_k - b_{k - 1}) e_n + \frac{b_N}{b_n} x \\
+&\leq \frac{b_{N - 1}}{b_n} s_{N - 1} + \frac{1}{b_n} \sum\limits_{k = N}^n (b_k - b_{k - 1}) \epsilon + \frac{b_N}{b_n} x \\
+&\leq \frac{b_{N - 1}}{b_n} s_{N - 1} + \frac{b_n - b_N}{b_n} \epsilon + \frac{b_N}{b_n} x \\
+&\to \epsilon \\
+\end{align*}
+
+Thus by choosing \(N'\) sufficiently large we may ensure \(|s_n - x| \leq \epsilon\) for \(n \geq N'\).
+\end{proof}
+
+\begin{lemma}{The Dini Lemma}
+Let \(X\) be a compact topological space and \(f_n: X \to \mathbb{R}\) be a pointwise monotonic decreasing sequence of non-negative continuous functions such that \(f_n \to f\) pointwise.
+Then \(\sup\limits_{x \in X} f(x) = \lim\limits_{n \to \infty} \sup\limits_{x \in X} f_n(x)\).
+
+Note that continuity of \(f\) is not assumed.
+\end{lemma}
+
+\begin{proof}
+The sequence \(\sup\limits_{x \in X} f_n(x)\) is monotone decreasing and bounded below by zero,
+so it converges to some value \(M\).
+
+Let \(t < M\),
+and define \(L_n = \{x: f_n(x) \geq t\}\).
+This is a closed subset of \(X\),
+is non-empty because \(\sup f_n \geq M > t\),
+and because the sequence is monotone decreasing we must have that if \(m < n\),
+\(L_n \subseteq L_m\),
+so it has the chain conditon and thus non-empty finite intersections.
+
+Thus \(L = \bigcap L_n\) is non-empty,
+by compactness of \(X\).
+But for any \(x \in L\) we must have \(f(x) \geq t\),
+as it is the limit of a set of points \(f_n(x) \geq t\).
+Thus \(\sup f(x) \geq t\).
+But \(t\) was arbitrary other than being \(< M\),
+so we must have \(\sup f(x) \geq M\). 
+
+But \(f(x) \leq f_n(x) \leq \sup f_n(x) \to M\),
+so we must have \(\sup f(x) \leq M\),
+and thus \(\sup f(x) = M\) as desired.
+\end{proof}
+
+\begin{corollary}[Dini's Theorem]
+Let \(X\) be a compact topological space,
+\(f_n: X \to \mathbb{R}\) a monotone increasing sequence of continuous functions,
+and \(f: X \to \mathbb{R}\) a continuous function.
+If \(f_n \to f\) pointwise,
+then \(f_n \to f\) uniformly.
+\end{corollary}
+
+\begin{proof}
+Apply the lemma to \(f - f_n\).
+\end{proof}
+
+\begin{lemma}[Abel's Theorem]
+If \(\sum a_n = l\) then \(sum t^n a_n \to l\) as \(t \to 1^-\).
+\end{lemma}
+
+\begin{proof}
+Let \(s_n = \sum\limits_{i = 1}^n a_n\), with \(s_0 = 0\).
+Let \(f(t) = \sum\limits_{i = 1}^\infty a_i t^i\).
+
+Then
+\begin{align*}
+f(t) &= \sum\limits_{i = 1}^\infty (x_i - x_{i - 1}) t^n\\
+&= \sum\limits_{i = 1}^\infty x_i t^i -  \sum\limits_{i = 1}^\infty x_{i - 1} t^i\\
+&= \sum\limits_{i = 1}^\infty x_i t^i -  t \sum\limits_{i = 1}^\infty x_i t^i\\
+&= (1 - t) \sum\limits_{i = 1}^{\infty} x_i t^i\\
+\end{align*}
+
+Let \(\alpha = \sum a_n\) and \(r_n = \sum\limits_{k > n} a_k\).
+
+Note that \(\sum t^n = {(1 - t)}^{-1}\),
+so \(\alpha = (1 - t) \sum \alpha t^n\).
+Thus \(\alpha - f(t) = (1 - t) \sum (\alpha - x_n) t^n = (1 - t) \sum r_n t^n \).
+
+Now let \(\epsilon > 0\).
+
+Now pick \(N\) such that for \(n \geq N\),
+\(|r_n| < \frac{1}{2}\epsilon\).
+
+Then \(|\alpha - f(t)| \leq (1 - t) \sum\limits_{n = 0}^N |r_n| t^n + (1 - t) \sum\limits_{n = N}^\infty \frac{1}{2}\epsilon t^n \leq (1 - t) M + \frac{1}{2} \epsilon\) for some \(M\).
+
+So for \(t\) sufficently close to \(1\),
+\(|f(t) - \alpha| < \epsilon\) as desired.
+\end{proof}
+
+\begin{corollary}
+Let \(f\) be an analytic function with Taylor series about zero \(f(z) = \sum a_n z^n\),
+with radius of convergence \(R\).
+If \(|z| = R\) and \(\sum a_n z^n\) converges,
+then \(\sum a_n z^n = f(z)\).
+\end{corollary}
+
+\begin{proof}
+Apply Abel's theorem to \(t \to f(tz)\).
+\end{proof}
+
 \bibliography{references}{}
 \bibliographystyle{acm}
 
