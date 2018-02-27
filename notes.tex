@@ -1476,10 +1476,12 @@ In particular~\cite{DBLP:conf/icst/PouldingF15, DBLP:conf/issre/FeldtP13, DBLP:c
 \chapter{Topological Barriers to Decision Making}
 
 This is a dump of an old draft paper I wrote that never really went anywhere.
-I still think it has some interesting ideas so I thought I'd include it here.
 
 Its core message is that the idea of Von Neumann-Morgenstern rationality is aphysical,
 and that even a logically omniscient agent cannot exhibit it if it is required to make only finitely many observations of the world.
+
+I still think it has some interesting ideas but nobody else seems to agree with me,
+which makes my research notes which nobody else reads a perfect place to put it\ldots
 
 This paper shows that the Von Neumann-Morgenstern axiomatization of rationality
 cannot correctly model logically omniscient agents who lack a priori
@@ -1524,7 +1526,7 @@ The VNM theorem says that under some reasonable assumptions,
 any consistent set of preferences must take the form of computing and comparing
 the expected value of some utility function. That is, the agent has a function
 $\nu : \mathcal{O} \to \mathbb{R}$, and picks the lottery corresponding to whichever
-of $E(\nu(U))$, $(E(\nu(V))$ is higher, or expresses indifference between the two.
+of $E(\nu(U))$, $E(\nu(V))$ is higher, or expresses indifference between the two.
 
 Commonly this is viewed as expressing a preorder $\preceq$ over lotteries. For
 the purpose of this article it will be convenient to instead view it as a function
@@ -1945,7 +1947,7 @@ which is defined to be equal to $1$.
 \begin{theorem}
 For an agent $d$
 using a sampling model, for each $c \in \mathcal{D}$
-the function $f_c(p, q) = P(d(E^{p, q} = c)$
+the function $f_c(p, q) = P(d(E^{p, q}) = c)$
 is continuous function $f_c: \mathcal{L}^2 \to [0, 1]$.
 \end{theorem}
 
@@ -1966,7 +1968,7 @@ must exist because $\sum P(E^{p, q} \text{ starts with } t_i) = 1$).
 
 Now, each $P(E^{p, q} \text{ starts with } t_i)$
 is continuous by assumption of continuous experiments, so the sum
-$\sum\limits_{i < N} u_i P(E^{p, q} \text{ starts with } t_i $
+$\sum\limits_{i < N} u_i P(E^{p, q} \text{ starts with } t_i)$
 is also continuous.
 
 Pick $\delta$
@@ -2062,7 +2064,7 @@ independent.
 
 To do this, simply define $p_i = t + \frac{\epsilon} u_i$,
 $q_i = t - \frac{\epsilon} u_i$, where $t$ is the uniform vector
-$(\frac{1}{N}, \ldots, (\frac{1}{N})$, and $\epsilon > 0$ is any
+$(\frac{1}{N}, \ldots, \frac{1}{N})$, and $\epsilon > 0$ is any
 sufficiently small number to keep all the coordinates within the bounds
 $[0, 1]$.
 
