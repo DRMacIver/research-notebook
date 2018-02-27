@@ -1,0 +1,46 @@
+\chapter{Neat Things}
+
+\section{Universal Differential Equations}
+
+The idea of a universal differential equation comes from \cite{rubel1981universal},
+which proved:
+
+\begin{theorem}
+There exists a non trivial fourth-order algebraic differential equation \(P(y', y'', y''', y'''') = 0\)
+where \(P\) is a polynomial in four variables, with integer coefficients, such that for any continuous function \(\phi\) on \(\mathbb{R}\),
+and for any positive continuous function \(\epsilon: \mathbb{R} \to \mathbb{R}^+\),
+there exists a \(C^\infty\) solution \(y\) of the equation such that \(|y(t) - \phi(t)| < \epsilon(t)\).
+
+One such specific equation (homogeneous of degree seven, with seven terms
+of weight 14) is
+
+\begin{align*}
+3{y'}^4 y'' {y''''}^2 &- 4 {y'}^4 {y'''}^2 y'''' + 6 {y'}^3 {y''}^2 y''' y'''' \\
+& + 24 {y'}^2 {y''}^4 y'''' - 12 {y'}^3 y'' {y'''}^3 - 29 {y'}^2 {y''}^3 {y'''}^3 \\
+& + 12 {y''}^7 = 0\\
+\end{align*}
+\end{theorem}
+
+This has a followup in ``Another universal differential equation''\cite{briggs2002another},
+which proved:
+
+\begin{theorem}
+For \(n > 3\), \(y'''' {y'}^2 - 3 y''' y'' y' + 2 (1 + n^{-2}) {y''}^3 = 0\) is universal.
+\end{theorem}
+
+I can kinda see how the proof works (I haven't tried following the details) but I have literally no idea where these terms could have come from.
+
+An interestingly stronger result comes from~\cite{bournez2017universal},
+which observes that the solutions here rely on an essential non-uniqueness in solutions to these differential equations.
+
+\begin{theorem}
+There is a polynomial \(P\) in \(d + 1\) variables such that for any \(\phi, \epsilon\) as above,
+there exist values \(\alpha_0, \ldots, \alpha_{d - 1}\) such that there is a \emph{unique} analytic solution \(y\) to the equations \(y^{(k)}(0) = \alpha_k\) and \(P(y, \ldots, y^{(d)}) = 0\),
+with \(|y(t) - \phi(t)| < \epsilon(t)\).
+\end{theorem}
+
+Thus we get the stronger result both that \(y\) is analytic and that \(P\) admits unique solutions.
+However, this requires much larger values of \(d\).
+I can't actually find a numeric value in the paper (I haven't read it in depth) but RJ Lipton claims ``\href{https://rjlipton.wordpress.com/2017/08/09/modeling-reality/}{somewhere north of 300}''.
+
+This paper also seems to have some interesting connections to computability theory that I haven't really attempted to follow yet.
