@@ -40,6 +40,10 @@ script:
   - rubber -d notes.tex
   - ls
 
+branches:
+  only:
+    - master
+
 before_deploy:
   - python3 scripts/date-tag.py
 
