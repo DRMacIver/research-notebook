@@ -1,0 +1,314 @@
+\chapter{Patches to L*}
+
+Here are some ideas I have for how to improve L* search.
+The subtext here is that I have a bunch of problems where I would like to use it but am currently unable to due to its cost.
+
+\section{L* Search with Character Partitioning}\label{sec:lstarcharpartition}
+
+As observed in ``Regular-expression derivatives re-examined''\cite{DBLP:journals/jfp/OwensRT09},
+it can be extremely helpful to consider DFA transitions not as happening on a single character,
+but instead a whole class of locally equivalent characters.
+
+I think L* search (see Section~\ref{sec:langinference}) could benefit from the same observation!
+
+Suppose we modified L* search as follows:
+Whenever we create a state,
+we associate a partition refinement data structure with it,
+initially treating all characters in the alphabet as equivalent.
+
+When completing the transition graph,
+we then only consider one character (say the smallest, or a randomly chosen one) from each partition.
+
+When giving a counter-example,
+this gives us a transition \(s \to s'\) via a character \(c\),
+and a new experiment \(e\) which distinguishes \(s'\) from the state that we \emph{should} have transitioned to.
+Note that unlike in conventional L*,
+that state might be in the table already!
+
+We can now use this experiment to refine the partition that \(c\) belongs to,
+by evaluating \(sc'e\) for every \(c'\) that we currently believe is equivalent to \(c\).
+If they do not all give the same answer,
+this splits the partition.
+Note that in this case we do not need to add the experiment to our set of experiments!
+
+This is still a correct algorithm for inference because it reduces to L* in the case where all partitions are fully refined,
+and at each point where we invoke the teacher to give us a counterexample one of three things happens:
+
+\begin{enumerate}
+\item The teacher tells us our DFA is correct and we are done.
+\item We find a new inequivalent state.
+\item We strictly refine one of the partitions.
+\end{enumerate}
+
+The reason is that either the canonical element we chose for the partition also produces a wrong outcome,
+in which case a new state is found as it usually is in L* search,
+or \(c\) exhibited different behaviour with \(e\) than said canonical element,
+so the partition is strictly refined.
+
+Thus whenever the DFA is not correct,
+we make progress,
+and thus we eventually terminate in a correct answer.
+
+How much of a complexity improvement is this?
+
+Well, it depends.
+It's not a strict improvement,
+because we make more calls to the teacher,
+but we potentially save a huge amount of time on query calls.
+
+Suppose the minimal DFA has \(m\) states and the alphabet has size \(n\).
+Let \(d_i\) be the number of equivalence classes of characters starting from state \(i\).
+Equivalently,
+\(d_i\) is the number of states reachable in a single transition from \(i\).
+
+Then when we have \(k\) experiments,
+classically L* search requires \(O(mnk)\) queries to complete its transition table (once we have found some suitable fraction of the available states).
+This changes that to \(O(k \sum d_i)\).
+In particular,
+\(d_i \leq m\),
+so we now only need to perform \(O(km \min(m, n)) \) queries to get completion (and possibly much less).
+
+However,
+we may have to perform an additional \(O(\sigma d_i)\) queries to the teacher,
+because we now have refutation steps that only increase the number of refinements.
+
+This might be fine.\
+e.g.\ for my use case more queries to the teacher is in some sense what we \emph{want}---if
+the idea here is that we are using the DFA to guide some fuzzing process then we'd ideally spend almost \emph{all} the time querying the teacher,
+and the table rebuilding process is something we only do when things go wrong,
+and performing \(256 m\) queries each time is hugely undesirable.
+
+Note: This is very like ``Query Learning of Regular Languages over Large Ordered Alphabets''\cite{Kaizaburo2017LearnAut},
+so certainly isn't a new category of idea,
+but their approach is to try to learn intervals.
+The set of discernible intervals may be much larger than the set of discernible sets,
+so I don't think this is actually a good idea except in the sense that their approach scales to much larger alphabets when it works.
+A similar thing is done in~\cite{DBLP:journals/corr/MensM15} with stronger assumptions on the teacher.
+
+\section{L* with guessing}
+
+I haven't quite pinned down what I mean by this,
+but I have this intuition that the big problem with L* is that it is too afraid of looking bad in front of teacher.
+That is,
+it tries too hard to get the right answer,
+incurring a large cost in number of queries to avoid a small cost in number of requests for counter-examples.
+If you're in a situation like I am where counter-examples are either cheap or uninteresting,
+this isn't a good trade-off.
+
+So what if you just guessed an answer that was likely to be correct when doing so is cheap?
+
+For example, imagine we have some plausible ordering \(e_1, \ldots, e_k\) of the experiments,
+and we want to calculate which state \(s\) corresponds to.
+Say discovery order + self-organising search or something.
+
+Now suppose we want to determine the state corresponding to \(t\).
+We run down our experiments,
+repeatedly pruning the list of possible states.
+
+What we are \emph{supposed} to do is to run every experiment,
+but what if we just stopped when we got down to one state?
+
+The answer is of course we would make more wrong transitions,
+but maybe that's fine?
+
+When our teacher points out that a transition was wrong,
+we can just check if it was based on a guess,
+and before we do anything else we run the rest of the experiments to see whether we already knew this should have been a novel state before adding a new experiment to the list.
+
+\section{L* with local experiments}\label{sec:lstarlocal}
+
+One of the big problems with L* is that it has to query every experiment against every state.
+This gets expensive fast!
+
+What if we instead maintained it as a decision tree?
+Each state corresponds to a leaf in the tree,
+and when we find an experiment that distinguishes some previously believed to be equivalent state from it,
+we split the leaf into a branch.
+
+The tree has the potential to become horribly unbalanced,
+but the worst case scenario is that we perform exactly as many queries as we were going to before!
+
+Although that's not technically true without a modification:
+This could cause us to add more experiments than we previously would have.
+When we discover a state needs to split,
+perhaps we should first try the experiments that we've previously seen that were not on the path to that state before adding a new one?
+
+\section{Recursive L*}
+
+This is currently a \emph{very} half-baked idea (and if you're not me and reading this section it probably won't make much sense).
+
+We have some prefix free language \(\mathcal{L}\), a classifier \(f: \mathcal{L} \to \mathbb{N}\),
+and a random variable \(X \in \mathcal{L}\).
+We would like to construct the conditional random variable \(X|f(X) = i\) more efficiently than using rejection sampling
+(as we're specially interested in doing this in cases where \(P(f(X) = i)\) is small).
+
+We are interested in particular in the language \(\{x: \exists i, P(X = i|X \text{ starts with } x) = 1\}\)---these
+are the set of prefixes which are enough to fully define the behaviour of \(X\).
+Note that unlike \(\mathcal{L}\) this is very much not prefix-free:
+It is closed under taking extensions!
+
+The idea I have been trying to figure out is whether we can do this with language inference,
+by creating and then simulating a deterministic finite automaton based on the language.
+This is not really viable,
+both because language inference is intrinsically expensive (even with some of the above ideas) and because the structure of the language while technically regular (we have a size upper bound if we really need one) is potentially massively complicated.
+
+The idea I'd like to explore in this section is whether we can make use of some of our knowledge about the structure and boundary information of the language to fix this.
+
+In Hypothesis,
+we keep track of example boundaries.
+This has a couple of consequences:
+
+\begin{itemize}
+\item We can tell exactly which substring corresponded to a given draw call.
+\item We can perform \emph{precise random replacements} of any draw call we choose---we
+draw the same bytes up to that point and while the draw call of that index is active we return random bytes,
+when it becomes inactive we read from the prefix.
+\end{itemize}
+
+Note that for any draw call,
+the set of strings corresponding to the draw at that index in any test case which agrees with the prefix of this one is itself a prefix free language.
+
+This means that at any index that is right after a completed draw call (counting bytes as draw calls here),
+we have a prefix free language of bytes that can come next (and a generator for them!).
+
+So we can consider this as a prefix-free regular language where the alphabet elements are not bytes,
+but are themselves other prefix-free regular languages!
+
+We have no hope of performing full blown L* here,
+but maybe we don't need to!
+
+We identify states not with strings as in regular L* but with a TestResult object plus an index into its draws and bytes calls.
+
+A state may be in one of two err states:
+Restricted and unrestricted.
+Unrestricted basically means that we don't think the value emitted here matters.
+We want as many states to be unrestricted as possible.
+Unrestricted states are cheap.
+
+A restricted state is one we've started building an automaton for,
+recursively applying the process to the local language!
+
+At the top level we work with the classifier that evaluates \(f(x0\ldots)\).
+Either this will successfully measure whether starting with \(x\) always gives the same value of \(f\),
+or we'll eventually find some string where it doesn't anyway.
+
+When we recursively apply this to the language of a given state,
+we instead apply it to the function that similarly zero-extends the string and then look at the state we end up in in the current state machine.
+
+We can then generate a test case by recursively walking the state graph:
+If the current state is unrestricted,
+just generate it.
+If it's restricted,
+generate a random walk through its state graph that ends up with the desired classification,
+then fill in by recursively generating an example from each of the transitions made.
+Finally, because we only matched up to some prefix, extend the rest with random noise.
+
+We can now check the results against our desired outcome.
+If it agrees with it, great we're done.
+If not we now begin a correction procedure.
+
+In one sense this is much easier than L*,
+because we know the exact point at which things wrong---where
+we entered an accepting state.
+
+But there are two possibilities here:
+One is that we need to introduce a new state,
+but another is just that our generator for the sub-language put us in the wrong place.
+So first we have to check what state we actually ended up in.
+If it's the right one,
+then we add the experiment to our set and split off a new state.
+Either way, we then recursively apply the correction procedure to the language for this state.
+
+\section{Lazy L*}
+
+I think this might be the idea that ties everything together.
+
+The key notion here is that actually I don't care about the goal of L*---I
+don't expect languages to be regular,
+and I don't much care about their DFA per se.
+
+This is false in that having a DFA of known structure would be extremely useful,
+but given that I don't expect there to be one I think it makes sense to try to figure out how to do with something weaker.
+
+The construction phase of L* can be thought of as separated out into two parts:
+
+\begin{enumerate}
+\item A process of partition refinement of the infinite set of strings\footnote{
+As in Section~\ref{sec:lstarcharpartition} this is also a useful way of thinking about the behaviour at any given state.
+}.
+\item The construction of a DFA from partition refinement.
+\end{enumerate}
+
+For the partition refinement,
+what we specifically have is that we have some infinite set \(X\) and a set of classifiers \(f_i: X \to \mathbb{N}\) and we want to get progressively better approximations to the partitions defined by \(p_x = \{y: \forall y, f_i(x) = f_i(y)\}\).
+
+Suppose we had an partition refinement data structure that looked as follows:
+
+\begin{lstlisting}
+class PartitionRefinement(object):
+  def __len__(self):
+    """The number of currently known distinct partitions."""
+
+  def __getitem__(self, i):
+    """The canonical representative for partition i.
+    This will never change - once a canonical representative
+    is chosen it is fixed."""
+
+  def partition_of(self, value):
+    """Return the current partition of value. If it is not
+    in any of the existing partitions, a new one will be
+    created and value will be used as its canonical representative.
+    """
+
+  def split_partition(self, value, classifier):
+    """Let i = self.partition_of(value). If classifier(value)
+    != classifier(self[i]) then create a new partition with
+    value as its canonical representative, and split the current
+    partition so that any values in it with distinct outcomes
+    for classifier(v) go in different partitions."""
+\end{lstlisting}
+
+L* search then implies a specific concrete implementation of this data structure that performs every operation fully strictly:
+When you call \texttt{split\_partition} it appends it to a global list of experiments,
+and when you look up a string it consults every one of those experiments to refine the partition.
+However, other implementations are possible!
+e.g. the local experiments idea in Section~\ref{sec:lstarlocal} is basically a suggestion of an alternate implemntation of this idea.
+Additionally,
+this API allows us to calculate the refinements \emph{lazily}.
+We don't have to determine if \(s\) should actually go in a new partition until we're asked what partition \(s\) is in.
+
+In L* we then build the DFA transitions eagerly as follows:
+
+\begin{lstlisting}
+def build_dfa(partition_table, characters):
+  # This should have been set up at the beginning
+  assert len(partition_table) > 0
+  assert partition_table[0] == b''
+
+  transitions = []
+
+  # we might increase the number of partitions as we
+  # go, so this can't be a normal for loop.
+  i = 0  
+  while i < len(partition_table):
+    assert len(transitions) == i
+    transitions.append([])
+    s = partition_table[i]
+    for c in characters:
+      transitions[i][c] = partition_table.partition_of(s + c)
+    i += 1
+  return transitions
+\end{lstlisting}
+
+But there's no reason we have to build it eagerly!
+One of the neat things about the implementation of regular expression matching in terms of the Brzozowski derivative is that you can build the DFA lazily as you match,
+and we can do exactly the same thing here.
+
+This is particularly useful if we want to somehow extract a subset of the automaton that is much smaller than the larger automaton!
+
+For example,
+suppose we had some set of strings \(U\) and we want to construct the automaton consisting of only states that are on the path for some \(x \in U\).
+We can simply enumerate \(U\) and walk the automaton,
+noting which states appear there,
+and extract the subset of the automaton that contains only those states.
+

@@ -1,0 +1,118 @@
+\chapter{Active Reading}
+
+This is a chapter of notes on books as I read them.
+
+\section{How to Read a Book}
+
+In ``How to Read a Book''\cite{ReadABook} they recommend a process of active reading,
+in which rather than passively reading a book you actively engage with it through a process of outlinining and note-taking (or maybe they don't and I've made that up? I'm currently revisiting the book).
+
+It would be interesting to contrast this with ``Writing to Learn''\cite{WritingToLearn} though sadly I think I've ditched my copy.
+I believe I was not all that impressed with it despite liking the concept.
+
+That may not be a fair summary, as I don't think I've actually read enough of ``How to Read a Book'' to give it one,
+so this section is my active reading of ``How to Read a Book''.
+
+They define four levels of reading:
+Elementary, Inspectional, Analytical, and Synoptical.
+Each of these builds on the preceding.
+
+Most of the book is about Analytical reading,
+which is a form of thorough reading for the purpose of gaining understanding.
+
+Things I currently believe in part because of this book (or at least believe I believe etc):
+
+\begin{enumerate}
+\item If you are actively engaged in trying to understand a book, you should be taking notes on it.
+\item You should try a shallow reading before you try a deep one.
+\item In particular it may be worth e.g.\ reading the conclusion before the rest of the book!
+Compare and contrast John Regehr's advice on reviewing papers in~\cite{ReviewingPapers}.
+\end{enumerate}
+
+\section{Behind Human Error}
+
+``Behind Human Error'' is about how accidents happen,
+and the fallacy of treating ``human error'' as an adequate explanation for those accidents.
+The Safety Matters blog has \href{a good review of this book}{http://www.safetymattersblog.com/2013/07/behind-human-error-by-woods-dekker-cook.html}.
+
+Its core thesis seems to be that humans are not the problem per se,
+and that in most cases systems are only as robust as they are because of the constant local intervention of human experts working around the inadequacies and preconceptions of the design of the system.
+
+It presents fifteen (!) premises in support of this:
+
+\begin{enumerate}
+\item ``Human error'' is an attribution after the fact.
+\item Erroneous assessments and actions are heterogeneous.
+\item Erroneous assessments and actions shoudl be taken as the starting point for an investigation, not an ending.
+\item Erroneous actions and assessments are a symptom, not a cause.
+\item There is a loose coupling between process and outcome.
+\item Knowledge of outcome (hindsight) biases judgements about process.
+\item Incidents evolve through the conjunction of several failures/factors.
+\item Some of the contributing factors to incidents are always in the system.
+\item The same factors govern the expression of expertise and of error.
+\item Lawful factors govern the types of erroneous actions or assesments to be expected.
+\item Erroneous actions and assessments are context-conditioned.
+\item Enhancing error tolerance, error detection, and error recovery together produce safety.
+\item Systems fail.
+\item Failures involve multiple groups, computers, and people, even at the sharp end.
+\item The design of artifacts affects the potential for erroneous actions and paths towards disaster.
+\end{enumerate}
+
+I do not currently understand all of these but those I do understand seem sensible.
+
+Some key concepts I've taken in so far:
+
+\begin{itemize}
+\item Error cannot be studied without studying normal operation in the absence of error.
+\end{itemize}
+
+From the Safety Matters review we have the following summarized definition that helped me a lot:
+
+\begin{quotation}
+An organization's sharp end is where practitioners apply their expertise in an effort to achieve the organization's goals.  The blunt end is where support functions, from administration to engineering, work.  The blunt end designs the system, the sharp end operates it.
+\end{quotation}
+
+Questions I'd like to think about when reading this book:
+
+\begin{itemize}
+\item How does this relate to software bugs?
+\item How does this relate to softare ops when you are monitoring a single ``living'' system rather than shipping software?
+\item How does this all relate to the concept of normalisation of deviance\cite{NormalisationOfDeviance}?
+It sure sounds like the core thesis of the book could be uncharitably read as ``Normalisation of Deviance is Good, Actually''.
+The term does not seem to appear anywher 
+\end{itemize}
+
+It seems to me that software development is in some sense inherently operating at the blunt end,
+while ops is the sharp end,
+but that doesn't feel quite right either.
+
+In many ways I think the problem is that the notion of sharp vs blunt end is not quite right,
+and instead there is a sort of fractal organisational structure where the blunt end is itself composed of sharp and blunt ends,
+but even that's not quite right.
+
+Possible I'm just being resistent to labelling as usual.
+
+Notable quotes:
+
+\begin{itemize}
+
+\item ``The sources of successful operations of systems under one set of conditions can be what we label errors after failure occurs.''
+\item ``Ironically, understanding the sources of failure begins with understanding how practitioners create success and safety first.''
+\item ``Under resource pressure, however, any safety benefits of change can get quickly sucked into increased productivity,
+which pushes the system back to the edge of the performance envelope.
+Most enefits of change, in other words, come in the form of increased productivity and efficeincy and not in the form of a more resilient, robust, and therefore safer, system.'' (p. 247). This is the ``Law of Stretched Systems''.
+\item ``Improper computerization can simply exarcerbate or create new forms of complexity to plague operations.'' (p. 248)
+\item ``A basic pattern in complex systems is a drift toward failure as planned defenses erode in the face of production pressures, and as ar esult of changes that are not well-assessed for their impact on the cognitive work that goes on at the sharp end.'' (p. 249)
+\item ``All cognitive systems are finite (people, machines, or combinations).
+All finite cognitive systems in uncertain changing situations are fallible.
+Therefore, machine cognititve systems (and joint systems across people and machines) are fallible.'' p. 144, cites~\cite{0849339332} p. 176.
+\item ``computerization and automation integrate or couple more closely together different parts of the system'' p. 144
+\item ``[an agent is a] computer program whose user interface is so obscure that the user must think of it as a quirky, but powerful, person'' p. 147. Page also contains a great discussion of questions users are forced to ask about interfaces.
+\item ``practitioners tailored their strategies and behavior to avoid problems and to defend against device idiosyncrasis'' (p. 151).
+\end{itemize}
+
+Notes on reactions:
+
+\begin{itemize}
+\item Fundamentally I'm having a \emph{very} hard time believing the claim that people care about and actively work towards safety.
+\end{itemize}

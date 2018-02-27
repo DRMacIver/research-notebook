@@ -1,0 +1,291 @@
+\chapter{Miscellaneous Research Questions}
+
+\section{Lower Bounds on Collecting Coupons}\label{sec:couponbounds}
+
+Given the setup of Section~\ref{sec:coupons} for the non-uniform coupon collector problem,
+here is an investigation into lower bounds on the expected waiting time for a complete set of coupons.
+There are many like it, but this one is mine.
+
+\begin{lemma}\label{lemma:couponpartition}
+Let \(U_i\) be the set of distinct values seen by time \(i\) and for \(A \subseteq \{1, \ldots, n\}\) let \(S^A\) be the number of times we have seen \(X_i \in A\) before we have seen every value in \(A\).
+Note that in terms of probabilities this is the same as being \(S\) for the conditional distribution \(X | X \in A\),
+but it's important that these are actually using the same \(X_i\).
+
+Then \(E(S|U_i = A) = i + \frac{1}{1 - P(X \in A)} E(S^{A^c})\)
+\end{lemma}
+
+\begin{proof}
+Let \(L_0 = i\) and \(L_{k + 1}\) be the first time after \(L_k\) that \(X_{L_{k + 1}} \not\in A\).
+
+Then \(E(S | S^{A^c} = m) = E(L_m)\).
+But \(L_{k + 1} - L_{k}\) is geometrically distributed with parameter \(P(X \not\in A) = 1 - P(X \in A)\),
+so \(E(L_{k + 1} - E_(L_k)) = \frac{1}{1 - P(x \in A)}\),
+and so \(E(L_m) = i + \frac{m}{1 - P(x \in A)}\).
+By applying conditional expectation we thus have \(E(S) = i + \frac{1}{1 - P(X \in A)} E(S^{A^c})\) as desired.
+\end{proof}
+
+This partition result also gives u
+
+\begin{theorem}
+\(E(S) \geq n H(n)\), with equality if and only if \(X\) is a uniform distribution.
+\end{theorem}
+
+\begin{proof}
+We will do this by induction.
+It is trivially true when \(n = 1\) because \(S = 1\) in that case.
+
+By applying the previous lemma,
+\(E(S | X_1 = i) = 1 + \frac{1}{1 - p_i} E(S^{{\{i\}}^c})\).
+
+\(S^{{\{i\}}^c}\) has the same distribution as \(S\) for the conditional distribution of \(X | X \neq i\),
+so in particular it has the same expecation.
+Thus by our inductive hypothesis,
+\(E(S^{{\{i\}}^c}) \geq n H(n)\) with equality if and only if this conditional distribution is uniform.
+
+Let \(b_i = E(S^{{\{i\}}^c})\).
+Then by conditional expectation,
+\(E(S) = 1 + \sigma \frac{p_i}{1 - p_i} b_i \geq (n - 1) H(n) \sigma \frac{p_i}{1 - p_i} \).
+
+This sum can be seen to be strictly minimized when \(p_i = \frac{1}{n}\),
+which gives us \(E(S) \geq 1 + (n - 1) H(n) \frac{n}{n - 1}\) with equality if and only if \(X\) is uniform.
+
+A simple induction shows that this term is equal to \(n H(n)\) and the result is proved.
+\end{proof}
+
+\begin{proposition}\label{prop:coupontail}
+If \(p = P(X \geq m)\) then \(E(T) \geq \frac{n - m + 1}{p}\).
+\end{proposition}
+
+\begin{proof}
+This is just the lemma applied to the very crude lower bound that \(E(S^A) \geq |A|\).
+\end{proof}
+
+\begin{proposition}\label{prop:couponestimate}
+For any strictly increasing function \(f\) and \(1 \leq m \leq n\)
+\(E(S) \geq \frac{f(m) (n - m + 1)}{E(f(X))}\).
+\end{proposition}
+
+\begin{proof}
+This follows straightforwardly from the standard result that \(P(X \geq m) \leq \frac{E(f(X))}{f(m)}\) and Corollary~\ref{prop:coupontail}.
+\end{proof}
+
+\begin{theorem}
+\(E(S) \geq \frac{2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - e (k + 1) {(n + 1)}^{k - 1}}{E(X^k)}\)
+\end{theorem}
+
+\begin{proof}
+Let \(f(x) = x^k\) in Proposition~\ref{prop:couponestimate}.
+
+Now, define \(g(x) = (n - x + 1) x^k\).
+We'd like to find \(m \in \{1, \ldots, m\}\) that maximises \(g(m)\) to get the largest lower bound on \(E(S)\).
+
+\begin{align*}
+g'(x) &= (n - x + 1) k x^{k - 1} - x^k\\
+&= (n + 1) k x^{k - 1} - (k + 1) x^k\\
+&= \left( (n + 1) k - (k + 1) x \right) x^{k - 1}\\
+&= \left( (n + 1) \frac{k}{k + 1} - x \right)(k + 1) x^{k - 1}\\
+\end{align*}
+
+So \(g'(x) = 0\) when \(x = x_{\max} = \frac{k}{k + 1} (n + 1)\).
+
+Unfortunately we can't just plug in \(x_{\max}\),
+because it might not be integral.
+But we can find an integer \(1 \leq i_{\max} \leq n\) with \(|x_{\max} - i| \leq 1\).
+\(|g'(y)| \leq (k + 1){(1 + x_{\max})}^{k - 1}\) for \(y\) between \(x_{\max}\) and \(i_{\max}\),
+so
+
+\(g(i_{\max}) \geq (n - x_{\max} + 1)x_{\max}^{k} - (k + 1){(1 + x_{\max})}^{k - 1}\)
+
+\begin{align*}
+(n - x_{\max} + 1)x_{\max}^{k} &= \frac{n + 1}{k + 1} {(n + 1)}^k {(1 + k^{-1})}^k\\
+&= {(k + 1)}^{-1} {(n + 1)}^{k + 1} {(1 + k^{-1})}^k\\
+&\geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} \\
+\end{align*}
+
+Where the latter bound comes from the fact that \(x \to {(1 + x^{-1})}^x\) is monotonic increasing.
+
+\begin{align*}
+{(1 + x_{\max})}^{k - 1} &= {(n + 1)}^{k - 1} {(1 + k^{-1})}^k \\
+&\leq e {(n + 1)}^{k - 1}\\ 
+\end{align*}
+
+Thus we have \(g(i_{\max}) \geq 2 {(k + 1)}^{-1} {(n + 1)}^{k + 1} - (k + 1) e {(n + 1)}^{k - 1}\).
+Plugging this in to the results of the previous corollary,
+this gives us the desired result.
+
+\end{proof}
+
+\begin{corollary}
+If \(X\) comes from some family of distributions such that \(E(X^k)\) is bounded as \(n\) varies,
+then \(E(S) \geq O(n^{k + 1})\).
+\end{corollary}
+
+This bound is not quite tight,
+and is missing a logarithmic factor.
+A more involved calculation could ``easily'' recover it---we
+simply dropped the factor of \(H(n - m + 1)\) in our initial approximation of how long it would take to fill all \(k \geq m\).
+
+These bounds are particularly interesting because \(E(S)\) is independent under permutations of \(\{1, \ldots, n\}\),
+and thus we may reorder the \(p_i\) values however we want before calculating these bounds.
+
+\begin{theorem}
+Let \(\sigma\) be a permutation of \(\{1, \ldots, n\}\).
+If \(f\) is strictly increasing on \([1, n]\) then \(E(f(\sigma(X)))\) is strictly minimized when \(\sigma(i) < \sigma(j)\) implies \(p_i \geq p_j\).
+\end{theorem}
+
+\begin{proof}
+Suppose that \(\sigma\) does not have this property.
+Pick \(i, j\) with \(p_i < p_j\) and \(\sigma(i) < \sigma(j)\).
+Now create \(\sigma' = (\sigma(i) \sigma(j)) \cdot \sigma\),
+the permutation that first performs \(\sigma\) and then swaps \(\sigma(i)\) with \(\sigma(j)\).
+
+Now:
+
+\begin{align*}
+E(f(\sigma'(X))) - E(f(\sigma(X))) &= p_i \sigma(j) + p_j \sigma(i) -  p_j \sigma(j) - p_i \sigma(i) \\
+&= (p_j - p_i) (\sigma(i) - \sigma(j)) \\
+&< 0\\ 
+\end{align*}
+
+Where the latter inequality follows because \(p_j - p_i > 0\) and \(\sigma(i) - \sigma(j) < 0\),
+by our assumptions.
+\end{proof}
+
+\begin{theorem}
+Let \(X\) be such that \(p_{i + 1} \leq p_i\),
+and let \(f\) be a strictly increasing function on \(\{1, \ldots, n\}\)
+Then \(E(f(X))\) is strictly maximized when \(X\) is the uniform distribution.
+\end{theorem}
+
+\begin{proof}
+A similar argument as the previous theorem: Suppose we have \(i\) with \(p_{i + 1} < p_i\).
+Write \(p_i = a + b, p_{i + 1} = a - b\),
+where \(a = \frac{p_i + p_{i + 1}}{2}\) and \(b = \frac{p_i - p_{i + 1}}{2}\).
+Then if \(X'\) results from replacing both \(p_i\) and \(p_{i + 1}\) with \(a\),
+this will result in
+
+\begin{align*}
+E(X') - E(X) &= a f(i) + a f(i + 1) - (a + b) f(i) - (a - b) f(i + 1) \\
+&= b (f(i + 1) - f(i)) \\
+&> 0\\
+\end{align*}
+
+So whenever we have two adjacent probabilities that are not equal,
+we can strictly increase the expectation by making them equal,
+thus this expectation is maximized by the uniform distribution.
+
+\end{proof}
+
+Thus with any strictly increasing function \(f\),
+once we have reorderd the values of \(X\) in this way we can regard \(E(f(X))\) as a measure of ``how far from uniform'' \(X\) is.
+
+\section{Boltzmann Sampling of Levenshtein Automata}
+
+\newcommand{\levlang}[2]{\mathcal{L} (#1, #2)}
+
+Let \(\mathcal{A}\) be an alphabet.
+To avoid triviality assume \(|\mathcal{A}| \geq 2\).
+
+The Levenshtein distance of two strings \(u, v\) over \(\mathcal{A}\), \(d(u, v)\), is the length of the shortest path from \(u\) to \(v\) where a step in the path is either replacing a single character, deleting as ingle character, or inserting a single character.
+
+The set of strings \(\levlang{u, n} = \{ v: d(u, v) \leq n \}\) is finite,
+and so certainly regular,
+but it even admits a fairly small DFA (this is not a new observation at all).
+
+This means we should be able to calculate a Boltzmann sampler for it\cite{falbs}!
+
+Can we do so efficiently?
+
+We'll use the Brzozowski derivative to explore the structure of these languages.
+
+Let \(b_L\) be the generating function of a language \(L\).
+
+First: A crosscheck we can use is that the coefficients in the generating function must always be polynomials,
+and the coefficients must be in \([|u| - n, |u| + n]\),
+as any single step can only change the size by at most one,
+so there are no strings of length outside that range to contribute to the generating function.
+
+First,
+two useful special cases:
+
+\begin{proposition}
+Now note that \(\levlang{\epsilon}{n}\) is the set of all strings of length at most \(n\),
+so has generating function \(b_{\levlang{\epsilon}{n}}(z) = \frac{1 - {(|A|x)}^{n + 1}}{1 - |A| z}\).
+\end{proposition}
+
+\begin{proposition}
+\(\levlang{v}{0}\) matches only \(v\),
+so has \(b_{\levlang{v}{0}} = z^{|v|}\) 
+\end{proposition}
+
+\begin{theorem}
+Let \(v = cu\) where \(c \in \mathcal{A}\),
+and let \(\delta\) be the Brzozowski derivative.
+
+\begin{itemize}
+\item \(\delta(\levlang{v}{n}, c) = \levlang{u}{n}\).
+\item \(\delta(\levlang{v}{b}) = \levlang{cu}{n - 1} \cup \levlang{u}{n - 1} \cup \delta(\levlang{u}{n - 1}, b)\)
+\end{itemize}
+
+\end{theorem}
+
+\begin{proof}
+If \(b = c\) there is nothing to do that we couldn't do later,
+so we can just consume it and match the rest of the string,
+thus \(\delta(\levlang{cu}{n}, c) = \levlang{u}{n}\).
+
+If \(b \neq c\) then we can either delete \(b\) from the string,
+meaning that the suffix must now be in \(\levlang{cu}{n - 1}\),
+replace it with \(c\),
+meaning that the suffix must now be in \(\levlang{u}{n - 1}\),
+or insert \(c\),
+which means that the remainder of the string \emph{including the current character},
+must be in \(\levlang{u}{n - 1}\),
+i.e.\ the suffix must be in \(\delta(\levlang{u}{n - 1}, b)\).
+So \(\delta(v, b)\) is the union of these three possibilities.
+\end{proof}
+
+\begin{proposition}
+Decompose \(v\) as \(v_1 \ldots v_m\) where each \(v_i\) consists of repetitions of a single character \(c_i\),
+and the character in \(v_i\) is distinct from that in \(v_{i + 1}\).
+Let \(n = |v|\) and suppose \(n > 0\).
+
+Then \(b_{\levlang{v}{1}} = m z^{n - 1} + (1 + (|\mathcal{A}| - 1)n) z^{n} + ((n + 1) |\mathcal{A}| - n) z^{n + 1}\)
+\end{proposition}
+
+\begin{proof}
+This is a relatively straightforward counting argument.
+
+You can obtain a string of length \(n - 1\) only by deleting a single character,
+but deleting any character inside \(v_i\) has the same effect,
+so there are only \(m\) distinct deletions.
+
+You can obtain a string of length \(n\) only by leaving the string unchanged or replacing a single character,
+and each index admits \(|\mathcal{A}| - 1\) such replacements.
+
+The calculation for \(n + 1\) is slightly harder.
+Such a string must be obtained by an insertion,
+but we must be careful not to overcount.
+
+First,
+we count all the insertions that just increase the length of one of the \(v_i\) by \(1\).
+This gives us exactly \(m\) new strings.
+
+Now, there are \(n + 1\) points we can insert at.
+If these are interior to a \(v_i\)---that is,
+it is between two characters of the same value---
+then there are \(\mathcal{A} - 1\) possible values to insert (anything other than \(c_i\)),
+but if it is the boundary then there are  \(\mathcal{A} - 2\) values---anything
+other than \(c_i\) or \(c_{i + 1}\).
+
+There are exactly \(m - 1\) points that are not interior---in
+between each of the \(v_i\).
+
+Thus there are \((m - 1)(|\mathcal{A}| - 2) + (n - m + 2)(|\mathcal{A} - 1|) = (n + 1) |\mathcal{A}| - m - n\).
+Counting the insertions that expanded a \(|v_i|\),
+this gives us a total of \((n + 1) |\mathcal{A}| - n\) as desired.
+\end{proof}
+
+In general I doubt the existence of a nice formula for this Boltzmann Sampler,
+but the nice thing is that we can use the derivative method to simulate it lazily.
+We can also use the above formula to simplify our calculations whenever we get down to a \(\levlang{v}{1}\) term.
