@@ -1,0 +1,23 @@
+\chapter{Updating Random Weighted Samplers}
+
+The problem this chapter is about is trying to maintain a set of values \(x_1, \ldots, x_n\) with corresponding weights \(w_i > 0\),
+such that we can efficiently add and remove values and change weights, and also efficiently sample \(x_i\) with probability proportional to \(w_i\).
+
+The papers I learned basically everythign I know about this from are:
+
+\begin{itemize}
+\item ``Dynamic Generation of Discrete Random Variates''\cite{DBLP:journals/mst/MatiasVN03}.
+\item ``Optimal algorithms for generating discrete random variables with changing distributions''\cite{hagerup1993optimal}
+\end{itemize}
+
+One of them is much more complicated than th e other and I no longer remember which is which.
+
+I was told about both by \href{https://cstheory.stackexchange.com/a/37651/4624}{this CS theory stackexchange answer}.
+
+The simpler approach I have used in the past inspired by these is to combine two data structures:
+
+\begin{itemize}
+\item Bucket the weights by \(2^n \leq w_n < 2^{n + 1}\).
+\item Store the buckets in a tree which maintains total weight on its nodes and use the obvious \(\log(n)\) algorithm to pick a bucket based on the total weight in it.
+\item Perform rejection sampling within that bucket (which terminates in expected at most two loop iterations because of the bucketing).
+\end{itemize}
