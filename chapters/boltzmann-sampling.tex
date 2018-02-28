@@ -22,6 +22,28 @@ you can automatically calculate a Boltzmann sampler for it using symbolic linear
 The similarity of this paper to~\cite{DBLP:journals/dam/FlajoletGT92} is probably not accidental given that they have an author in common---both
 are about using generating functions of regular languages to simplify some natural probabilistic problem through semi-automatic constructions.
 
+\section{Misc Notes}
+
+The Boltzmann Samplers were motivated because they were easy to construct,
+but there's another reason to consider them:
+They are the maximum entropy distribution over \(\mathcal{L}\) with a given expected size.
+
+From \href{https://en.wikipedia.org/wiki/Maximum_entropy_probability_distribution#Discrete_version}{Wikipedia's entry on Maximum Entropy Distributions}:
+
+\begin{theorem}
+Let \(S = \{x_1, \ldots, \}\) be some countable set (possibly finite) and let \(f: S \to \mathbb{R}\).
+Let \(f_i: S \to \mathbb{R}\), \(a_i \in \mathbb{R}\) and let \(C\) be the class of random variables \(X\) over \(S\) which satisfy \(E(f_i(X)) = a_i\).
+
+Then if \(C\) contains an element which assigns strictly positive probability to each \(x_i\), and \(C\) also contains a maximum entropy distribution,
+then that distribution must take the form \(P(X = x) = c \exp\left( \sum \lambda_i f_i(x)  \right)\) for appropriately chosen constants \(c, \lamba_i\) to achieve the desired constraints and make the probabilities add up to one.
+
+Morever, if such a choice of \(c, \lambda_i\) exists, then the distribution is always the maximum entropy distribution.
+\end{theorem}
+
+\begin{corollary}
+The maximum entropy distribution over any combinatorial class with a given expected size is a Boltzmann Sampler.
+\end{corollary}
+
 \section{Boltzmann Sampling over Possibly Infinite Unknown Automata}
 
 Note for those who are following along at home:
