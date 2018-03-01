@@ -4,7 +4,7 @@ Given some combinatorial class of objects \(\mathcal{C}\) with a notion of size,
 we might want to sample from it in such a way that any two objects with the same size occur with the same probability.
 Boltzmann Samplers are a class of samplers which have this property and are amenable to mostly automated constructions.
 
-The idea is that we consider the generationg function \(f(z) = \sum\limits_n z^n C_n\),
+The idea is that we consider the generating function \(f(z) = \sum\limits_n z^n C_n\),
 where \(C_n =  |\{c \in C: |c| = n\}|\}\),
 so the coefficient of \(z^n\) is the number of elements of \(\mathcal{C}\) with size \(n\).
 
@@ -394,7 +394,9 @@ We can easily calculate for every context free language (starting from alternati
 If we know that there are \(n\) strings of minimal length \(k\),
 and that are \(m\) characters in its alphabet,
 then we know that \(f(x) \geq n x^k\),
-and also that \(f(x) \leq \frac{{(mx)}^k}{1 - m x}\).
+and also that \(f(x) \leq \frac{\min(1, {(mx)}^k)}{1 - m x}\).
+
+In particular if \(mx < 1\) the termination chance out of the box is \(\frac{n}{m^k} (1 - mx)\).
 
 \section{Misc Links}
 
