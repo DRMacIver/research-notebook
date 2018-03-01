@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
-rubber -d notes.tex
+
+if ! rubber -d notes.tex ; then
+    echo -ne '\007'
+fi
+
 inotifywait notes.tex references.bib chapters chapters/*.tex $0
 exec $0
