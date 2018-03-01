@@ -377,3 +377,24 @@ if we have an easy way of determining \(f_m(x) = \min(f(x), m)\) (which, again, 
 
 For many PRNG languages this likely allows us to determine a perfect representation of the automaton without ever requiring a counter-example!
 
+\section{Boltzmann Sampling for Context-Free Languages}
+
+The lazy Boltzmann sampling approach should work very well with context free grammars because we have good lower and upper bounds.
+
+We can easily calculate for every context free language (starting from alternation, concatenation, recursion):
+
+\begin{enumerate}
+\item Whether the language is empty.
+\item The length of the shortest string in the language and the number of strings of that length.
+\item The alphabet of characters that can occur in the string.
+\end{enumerate}
+
+If we know that there are \(n\) strings of minimal length \(k\),
+and that are \(m\) characters in its alphabet,
+then we know that \(f(x) \geq n x^k\),
+and also that \(f(x) \leq \frac{{(mx)}^k}{1 - m x}\).
+
+\section{Misc Links}
+
+``Multi-dimensional Boltzmann Sampling of context-free Languages''\cite{DBLP:journals/corr/abs-1002-0046} is about the problem of constructing words with specific frequency distributions of letters.
+I'm not very interested in this problem but it seems to have some interesting theory and referneces that would be useful for exploring this area further.
