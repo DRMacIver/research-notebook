@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-
-if ! rubber -d notes.tex ; then
+if ! python scripts/reflist.py ; then
     echo -ne '\007'
 fi
 
-if ! python scripts/reflist.py ; then
+if ! rubber -d notes.tex ; then
     echo -ne '\007'
 fi
 
