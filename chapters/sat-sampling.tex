@@ -1,0 +1,164 @@
+\chapter{Sampling Uniformly at Random from Solutions to SAT}
+
+Consider some SAT problem.
+A SAT solver will give you a solution to it (if one exists),
+but what if you wanted an arbitrary one?
+It's easy to get more solutions from the solver by adding extra clauses,
+but what if you wanted to sample uniformly at random from the space of all
+solutions?
+
+This is an area of active research and seems to be a hard problem.
+Notable examples:
+
+\begin{enumerate}
+\item Efficient Sampling of SAT Solutions for Testing\cite{dutra2018efficient}
+\item Near-Uniform Sampling of Combinatorial Spaces Using XOR Constraints\cite{DBLP:conf/nips/GomesSS06}
+\item Uniform Generation of NP-Witnesses Using an NP-Oracle\cite{DBLP:journals/iandc/BellareGP00}
+\item A Scalable and Nearly Uniform Generator of SAT Witnesses\cite{DBLP:conf/cav/ChakrabortyMV13}
+\end{enumerate}
+
+I've not fully understood the existing literature yet if I'm being honest.
+
+I seem to have figured out a possibly interesting possibly new approach to this problem.
+This is very unlikely to be true given that it's an active field of research that I am not a part of,
+but I've so far not been able to refute it and the solution seems to work rather well despite the low quality of my prototype.
+
+The core idea of my approach is as follows:
+
+\begin{enumerate}
+\item We use the method of Probabilistic Divide-and-Consquer\cite{DBLP:journals/cpc/ArratiaD16} to break up the problem into sub-problems.
+Given an exact oracle for a certain probability problem,
+this will allow us to calculate an exact uniform sampler for SAT.
+\item We can then lift the exactness requirement on the oracle using a technique for generating a Bernoulli distribution with probabilities specified only by some converging sequence.
+\item By leveraging a technique based on an existing inexact but cheap random sampler from~\cite{DBLP:conf/nips/GomesSS06},
+a simple randomized algorithm allows us to choose a good decomposition to get efficient behaviour in practice.
+\end{enumerate}
+
+The core algorithm is as follows:
+
+We first decompose the SAT problem into one of four types:
+
+\begin{itemize}
+\item \emph{trivial}---it is the SAT problem with no clauses.
+\item \emph{forced}---it has one or more variables which always take the same value in any solution.
+\item \emph{composite}---it has no forced variables but can be partitioned into a set of at least two sets of clauses which share no variables in common.
+\item \emph{primitive}---any other set of clauses.
+\end{itemize}
+
+A simple recursive algorithm then takes care of the first three cases:
+If the SAT problem is trivial,
+there is nothing to do.
+If it is forced,
+we set all of the forced variables in the result,
+unit propagate them into the set of clauses to get a reduced problem,
+and recurse to that.
+If it is composite,
+we generate each of the components independently because they don't interact.
+
+This leaves the primitive clauses as the hard part to generate,
+and we need a way to decompose them.
+This is where probabilistic divide and conquer comes in.
+
+The key observation of probabilistic divide and conquer is that if you have some independent random variables \(A, B\) and you want to sample from the joint distribution \((A, B) | h(A, B) = 1\),
+then it suffices to first sample \(A = x\) from the distribution \(A | h(A, B) = 1\),
+and then sample from \(B | h(x, B) = 1\).
+
+This is a trivial observation (it's just Bayes's theorem),
+but is surprisingly powerful.
+
+In this case we apply it as follows:
+
+First suppose we have an oracle \(q\) which takes a set of SAT clauses and returns the probability of a uniformly chosen set of assignments satisfying them.
+This is certainly at least as hard as SAT (which is equivalent to \(q(x) > 0\)).
+According to~\cite{DBLP:conf/aaai/MeelVCFSFIM16} it's actually much harder than SAT (It's P\# complete. I only have a very rough idea of what that means).
+
+Suppose we had some pivot variable \(x\) and let \(A\) be a uniformly chosen assignment.
+For a set of clauses \(C\),
+we can calculate \(P(A_x | SAT(A, C)\) easily using this oracle,
+because it's just \(\frac{q(C \cup \{x\})}{q(C)}\).
+
+This allows us to recurse to a smaller set of clauses:
+We pick the value of \(x\) with this probability,
+then we add it to the set of clauses and do unit propagation,
+and recurse to the new smaller set of clauses.
+
+This thus describes a correct recursive algorithm for uniform sampling from SAT.
+
+Of course,
+it does that by eliding the hard part---actually
+finding such an oracle.
+
+The neat trick I figured out recently (I doubt it's a novel idea---certainly the seeds of it are present all over the place---but
+the specifics aren't something I've seen taken advantage of) is that in order to simulate an event with a given probability,
+you don't actually need to know that probability.
+You only need to be able to calculate increasingly fine-grained approximations to it.
+
+Suppose you have some unknown probality \(p\) and sequences \((u_n \leq p \leq v_n\) with \(v_n - u_n \to 0\).
+You can simulate a Bernoulli random variable with parameter \(p\) as follows:
+
+\begin{enumerate}
+\item Pick a uniform random real \(U \in [0, 1]\).
+\item Evaluate \(u_n, v_n\) for sufficiently high values of \(n\) that either \(u_n > x\) or \(v_n < x\).
+We can do this with probability \(1\) (the only value for which that would be impossible is if we drew \(U = p\), which happens with probability zero).
+\item If \(u_n > x\) return \(1\), otherwise return \(0\).
+\end{enumerate}
+
+The point is that we only need to know \(p\) to sufficient precision to be able to determine which side of \(U\) it lies,
+which depending on our rate of convergence may not be very hard at all!
+
+The problem now reduces to three things:
+
+\begin{itemize}
+\item Efficient decomposition
+\item Good pivot selection
+\item Efficiently calculating sequences for lower and upper bounds
+\end{itemize}
+
+The latter is not terribly hard (though is fiddly):
+In our decomposition,
+each has bounds expressible monotonically in terms of its sub-problems.
+If we start with an fairly weak set of bounds,
+we can then update them by updating the bounds of the most uncertain sub-problem and then updating the current bounds based on that.
+For primitives,
+we use the same pivot we use for sampling and just add together the probabilities \(P(C \wedge x) + P(C \wedge \not x)\).
+
+We just need some good starting bounds so that we don't have to recurse too deeply.
+The following seem to work pretty well:
+
+\begin{lemma}
+Let \(C = \{c_1, \ldots, \}\) be a satisfiable set of clauses,
+with variables \(V = \{v_1, \ldots, v_n\}\) each appearing in at least one clause.
+
+Then the following bounds apply:
+
+\begin{enumerate}
+\item \(q(C) \geq 1 - \sum 2^{-|c_i|}\)
+\item If \(D \subseteq 2^V\) is a set of disjoint sets of variables,
+and \(\kappa: 2^V \to \mathbb{N}\) counts the number of inequivalent clauses in \(C\) that use exactly a set of variables,
+then \(q(C) \leq \prod\limits_{d \in D} (1 - \kappa(d) 2^{-|c|})\)
+\item If \(C\) is satisfiable then \(q(C) \geq 2^{-n}\).
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+In order:
+
+The first is because \(P(\text{UNSAT}) \leq E(\text{UNSAT}) = \sum 2^{-|c_i|}\),
+so \(P(\text{SAT}) = 1 - P(\text{UNSAT}) = 1 - \sum 2^{-|c_i|}\).
+
+The second is because the satisfaction of each of these clauses is independent (because they share no variables),
+and the terms in the product are the probability of each one being satisfied.
+
+The last is because there are only \(2^{n}\) relevantly distinct assignments,
+and at least one of them results in SAT.
+\end{proof}
+
+We can then use these (with a simple greedy algorithm to find a decently large independent set---finding a maximal one is NP-hard,
+and we've got quite enough of that going on already) to provide decent starting bounds on the probabilities for \(q\) on a primitive set of clauses,
+without having to recurse into the pivot (though we will usually eventually have to! The point is just to bound the recursion wherever possible).
+
+We now need to do pivot selection and decomposition.
+
+The following algorithm 
+
+
