@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-if ! python scripts/reflist.py ; then
+if ! [ -d "venv" ] ; then
+  rm -rf venv
+  virtualenv venv
+  venv/bin/pip install -r requirements.txt
+fi
+
+if ! venv/bin/python scripts/reflist.py ; then
     echo -ne '\007'
 fi
 
