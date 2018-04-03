@@ -10,9 +10,13 @@ if ! venv/bin/python scripts/reflist.py ; then
     echo -ne '\007'
 fi
 
-if ! rubber -d notes.tex ; then
-    echo -ne '\007'
-fi
+FILES="notes.tex literature.tex"
 
-inotifywait notes.tex references.bib chapters includes/*.tex chapters/*.tex $0
+for f in $FILES; do
+  if ! rubber -d "$f" ; then
+      echo -ne '\007'
+  fi
+done
+
+inotifywait $FILES references.bib chapters includes/*.tex chapters/*.tex $0
 exec $0

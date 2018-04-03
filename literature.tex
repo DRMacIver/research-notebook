@@ -1,0 +1,92 @@
+\input{./includes/preamble.tex}
+
+\title{Literature Review for Hypothesis PhD}
+\author{David R. MacIver}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+
+This is my literature review for my PhD.
+It's very much a work in progress.
+
+In it's present form it is currently intended as a skeleton around which I will build things,
+and does not contain much text that I expect will end up in the final ``product''.
+
+\chapter{Outline}
+
+Questions I would like to provide partial answers to:
+
+\begin{itemize}
+\item What is property-based testing?
+\item What is the proper context for property-based testing?
+\item What is the significance of Hypothesis?
+\item What are some interesting research directions for improving Hypothesis?
+\end{itemize}
+
+\chapter{Unincorporated Material}
+
+This chapter gathers papers that I must/should/could include in my review,
+along with some notes on them,
+but does not attempt to do any significant amount of synthesis.
+
+\section{Must Haves}
+
+\subsection{QuickCheck Papers}
+
+The foundational paper for my work is of course ``QuickCheck: a lightweight tool for random testing of Haskell programs''\cite{DBLP:conf/icfp/ClaessenH00}.
+
+There are a number of other papers worth referencing:
+
+\begin{itemize}
+\item ``Testing telecoms software with quviq QuickCheck''\cite{DBLP:conf/erlang/ArtsHJW06}
+\item ``SmartCheck: automatic and efficient counterexample reduction and generalization''\cite{DBLP:conf/haskell/Pike14} is one of the few papers about improving QuickCheck's test case reduction,
+so definitely worth including.
+\end{itemize}
+
+\subsection{Test Case Reduction Papers}
+
+\begin{itemize}
+\item ``Simplifying failure-inducing input''\cite{DBLP:conf/issta/HildebrandtZ00} is the delta-debugging paper that you have to cite if you ever write anything about test-case reduction.
+\item ``One test to rule them all''\cite{DBLP:conf/issta/GroceHK17} is particularly relevant to Hypothesis because of the relationship between normalization and its shortlex-minimization goal.
+\end{itemize}
+
+\subsection{Misc}
+
+\begin{itemize}
+\item ``Minimization of Randomized Unit Test Cases''\cite{DBLP:conf/issre/LeiA05} is a good justification for the combination of random test case generation and test-case reduction.
+\end{itemize}
+
+\begin{itemize}
+\item ``Simplifying failure-inducing input''\cite{DBLP:conf/issta/HildebrandtZ00} is the delta-debugging paper that you have to cite if you ever write anything about test-case reduction.
+\item ``One test to rule them all''\cite{DBLP:conf/issta/GroceHK17} is particularly relevant to Hypothesis because of the relationship between normalization and its shortlex-minimization goal.
+\end{itemize}
+
+\section{Should Haves}
+
+\begin{itemize}
+\item ``Targeted property-based testing''\cite{DBLP:conf/issta/LoscherS17} is about how you can do what is basically hill climbing with restart to better test properties.
+This is relevant mostly as an example of why it's nice to be able to extend with new operations on generated data.
+\item ``Why is random testing effective for partition tolerance bugs?''\cite{DBLP:journals/pacmpl/MajumdarN18} is an interesting argument that random testing can and should work.
+\item ``Partition Testing Does Not Inspire Confidence``\cite{DBLP:journals/tse/HamletT90} is a good argument that random testing is pretty OK.
+\item ``Behind Human Error''\cite{BehindHumanError} contains a lot of lucid discussion about error that I think is valuable for this sort of work.
+\item ``An Experimental Evaluation of the Assumption of Independence in Multiversion Programming''\cite{DBLP:journals/tse/KnightL86}---a
+lot of property-based testing is basically multiversion programming to do differential testing.
+\end{itemize}
+
+\section{Could Haves}
+
+\begin{itemize}
+\item ``Can a Machine Design?''\cite{doi:10.1162/07479360152681083} contains a really nice account of different modes of human/computer codesign,
+and how having the computer make things for a human to correct is much less stressful than having the computer correct the human.
+\item ``When and what to automate in software testing? {A} multi-vocal literature review''\cite{DBLP:journals/infsof/GarousiM16}---this
+seems a natural fit.
+\end{itemize}
+
+\input{./includes/bibsection.tex}
+
+\end{document}
