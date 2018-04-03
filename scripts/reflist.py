@@ -11,7 +11,7 @@ if __name__ == '__main__':
             if entry['ENTRYTYPE'] == 'proceedings':
                 continue
             title = re.sub(r" +", " ", entry['title'].replace("\n", " "))
-            o.write('\\item %s\\cite{%s}\n' % (
+            o.write('\\item ``%s\'\'\\cite{%s}\n' % (
                 title, entry['ID']
             ))
         o.write('\\end{itemize}\n')

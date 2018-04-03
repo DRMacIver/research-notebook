@@ -48,3 +48,42 @@ Here are some interesting citing papers that might be worth reading:
 \item ``Beginner's luck: a language for property-based generators''\cite{DBLP:conf/popl/LampropoulosGHH17}
 \item Automating Black-Box Property Based Testing\cite{DBLP:phd/basesearch/Duregard16}
 \end{itemize}
+
+\section{History and Etymology}
+
+These days ``property-based testing'' seems to be used almost synonymously with ``QuickCheck derived tooling'',
+but this turns out to be somewhat of a historical anomaly.
+
+The earliest usage of the term that I can find is in the work of George Fink,
+leading up to his PhD thesis ``Discovering security and safety flaws using property-based testing''\cite{fink1996discovering}.
+The paper which introduces the term is ``Towards a property-based testing environment with applications to security-critical software''\cite{fink1994towards}.
+
+This sense of ``property-based testing'' appears to be mostly unrelated to the modern sense:
+The properties are expressed in TASPEC,
+a language which as far as I can tell is to a derivative of Z,
+and the implementation is based on program slicing.
+
+The original QuickCheck paper\cite{DBLP:conf/icfp/ClaessenH00} never uses the term ``property-based testing'' (``property-based specifications'' appears once in the paper).
+The first time it is used in a QuickCheck paper is in ``Testing telecoms software with quviq QuickCheck''\cite{DBLP:conf/erlang/ArtsHJW06},
+where it is not explicitly introduced they just say:
+
+\begin{quote}
+Quviq QuickCheck is a property-based testing tool, developed from
+Claessen and Hughes' earlier QuickCheck tool for Haskell
+\end{quote}
+
+The timeline for this is that the first paper was published in 2000,
+with the telecoms one being published in 2006.
+2006 was also the year that Quviq was founded (May 2006 according to the archive.org version of their site from then).
+The term ``property-based testing'' is not used in their initial flyer,
+soo that gives a fairly narrow window for when they started using it---some
+time in 2006.
+
+Based on analysis of the mailing lists and IRC archives for the Haskell community,
+the term then got backported from Erlang to Haskell.
+The words ``property based'' don't really appear together in the mailing lists (haskell or haskell-cafe) or IRC until 2007.
+
+There is however some use of the term ``property-based testing'' in the intervening years in a way that seems to align with the modern usage.
+For example ``A Metamorphic Approach to Integration Testing of Context-Sensitive Middleware-Based Applications''\cite{DBLP:conf/qsic/ChanCL05} refers to metamorphic testing as ``a property-based testing strategy'' in 2005.
+
+I have emailed John Hughes to ask him if he remembers when and why they started using the term.
