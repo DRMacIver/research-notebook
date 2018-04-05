@@ -11,22 +11,100 @@
 
 \chapter{Introduction}
 
-This is my literature review for my PhD.
-It's very much a work in progress.
+NB:\ This literature review is very much a work in progress and is not really ready for public consumption.
 
-In it's present form it is currently intended as a skeleton around which I will build things,
-and does not contain much text that I expect will end up in the final ``product''.
+Let me begin with some context.
 
-\chapter{Outline}
+The focus of my PhD is an open source project I wrote (and many others now also contribute to) called \emph{Hypothesis}.
+Hypothesis was originally purely a Python library\footnote{\url{https://github.com/HypothesisWorks/hypothesis-python}},
+but now also has a version for Ruby\footnote{\url{https://github.com/HypothesisWorks/hypothesis-ruby}}.
+I will blur the distinction and simply refer to them all as ``Hypothesis''.
 
-Questions I would like to provide partial answers to:
+Hypothesis is a library in the spirit of QuickCheck\ref{DBLP:conf/icfp/ClaessenH00} for \emph{property-based testing}.
+I will discuss in more detail what property-based testing actually \emph{is} in TODO,
+but the distinguishing feature of both Hypothesis and QuickCheck is that they provide generated data for user-defined test functions,
+allowing users to write tests that quantify over a range of data---instead
+of testing with a specific string,
+they can write a test that logically tests \emph{all} strings (although in practice they only test a finite number of strings).
+
+Hypothesis is an interesting vehicle for research for two main reasons:
 
 \begin{itemize}
-\item What is property-based testing?
-\item What is the proper context for property-based testing?
-\item What is the significance of Hypothesis?
-\item What are some interesting research directions for improving Hypothesis?
+\item It is arguably the first widely used tool of its type that does not target a functional programming language\footnote{
+The other contender is theft (\url{https://github.com/silentbicycle/theft/}).
+Comparisons are odious,
+and theft is an excellent project,
+but Hypothesis almost certainly has significantly more usage than theft,
+and probably has for most of their shared lifetime.
+},
+and thus has many different challenges and aspects to it that are not present in the existing literature on property-based testing.
+\item Hypothesis has a novel and unusual underlying model,
+in which random generation is reframed as a parsing operation.
+This leads to a number of improvements,
+both current and potential,
+in its capabilities compared to existing property-based testing implementations.
+I will discuss these further in TODO.\ 
 \end{itemize}
+
+Being based first and foremost on the work and impact in a software testing tool that is used in practice,
+my research necessarilly comes with a subgoal of bridging academic and industry notions of software testing.
+This is already to some extent implicit in the field---as
+I will discuss in TODO,
+QuickCheck style testing has a fairly large presence in industry.
+As a result,
+this literature review is necessarily \emph{multivocal} in the sense of~\cite{DBLP:conf/ease/GarousiFM16}---that is,
+I will make extensive reference to the so-called ``grey'' literature,
+is published outside of the formal peer review system.
+I will attempt to use this to explore the following two questions:
+
+\begin{itemize}
+\item What is the proper context of property-based testing?
+\item How can be improve not just the state of the art in testing research,
+but also the adoption of the tools we develop?
+\end{itemize}
+
+Much of the latter question falls outside of research per se,
+but I believe it is vital to consider it both to increase the impact of research and also because it can inform interesting research questions.
+
+The rest of this literature review follows the following structure:
+
+\begin{enumerate}
+\item In Chapter~\ref{chap:quickcheck} I will discuss what QuickCheck is and does,
+and explore some of the differences between it and its descendants,
+as well as other software testing tools.
+\item In Chapter~\ref{chap:purposesoftesting} I will ask ``What is testing \emph{for}?'',
+and argue that academia and industry have very different answers to this question.
+Within this framework, I will discuss the sub-question ``What is property-based testing and how can it help?''.
+\item In Chapter~\ref{chap:testinglanguage} I will talk about some of the novel design choices in Hypothesis,
+and discuss active areas of research that will inform the direction of my PhD.
+\item Finally in Chapter~\ref{chap:conclusion} I will round off with some closing remarks about the general space of software testing research and its role in bridging academia and industry.
+\end{enumerate} 
+
+\chapter{QuickCheck and Friends}\label{chap:quickcheck}
+
+This chapter isn't written yet.
+It will be about QuickCheck, test.check,
+and other testing tools.
+
+\chapter{The Many Hats of Testing and Testers}\label{chap:purposesoftesting}
+
+This chapter isn't written yet.
+In this chapter I will argue that our notion of what testing is for is flawed:
+Most testing cannot be about finding bugs,
+because the overwhelming majority of software has no non-trivial bugs until a negotiation process decides that a particular behaviour is a bug.
+
+\chapter{Exploring the Language of a Test}\label{chap:testinglanguage}
+
+This chapter isn't written yet.
+This will be a little bit about explaining the implementation of Hypothesis,
+and a lot about how this connects up to ideas from fuzzing, language inference, combinatorics (e.g. Boltzmann Samplers), and maybe search-based software testing.
+It will also contain a test-case reduction subsection.
+
+\chapter{A New and Terrifying Age of High Quality Software}\label{chap:conclusion}
+
+This chapter isn't written yet.
+It's basically a more entertaining name for ``Conclusion'',
+with reference to the manifesto in the Hypothesis documentation.
 
 \chapter{Unincorporated Material}
 
@@ -53,17 +131,7 @@ so definitely worth including.
 \begin{itemize}
 \item ``Simplifying failure-inducing input''\cite{DBLP:conf/issta/HildebrandtZ00} is the delta-debugging paper that you have to cite if you ever write anything about test-case reduction.
 \item ``One test to rule them all''\cite{DBLP:conf/issta/GroceHK17} is particularly relevant to Hypothesis because of the relationship between normalization and its shortlex-minimization goal.
-\end{itemize}
-
-\subsection{Misc}
-
-\begin{itemize}
 \item ``Minimization of Randomized Unit Test Cases''\cite{DBLP:conf/issre/LeiA05} is a good justification for the combination of random test case generation and test-case reduction.
-\end{itemize}
-
-\begin{itemize}
-\item ``Simplifying failure-inducing input''\cite{DBLP:conf/issta/HildebrandtZ00} is the delta-debugging paper that you have to cite if you ever write anything about test-case reduction.
-\item ``One test to rule them all''\cite{DBLP:conf/issta/GroceHK17} is particularly relevant to Hypothesis because of the relationship between normalization and its shortlex-minimization goal.
 \end{itemize}
 
 \section{Should Haves}
