@@ -94,18 +94,110 @@ The presenter never explicitly says that last part,
 but everybody understands what's happening.
 \end{quote}
 
-\chapter{QuickCheck and its friends and family}\label{chap:quickcheck}
+\chapter{QuickCheck's friends and family}\label{chap:quickcheck}
 
-This chapter isn't written yet.
-It will be about QuickCheck, test.check,
-and other testing tools.
+QuickCheck was introduced back in 2000,
+in ``QuickCheck: a lightweight tool for random testing of Haskell programs''\cite{DBLP:conf/icfp/ClaessenH00}.
+It has since been ported to many languages\footnote{\url{https://hypothesis.works/articles/quickcheck-in-every-language/}},
+with the most notable one being the commercial Erlang implementation\cite{DBLP:conf/erlang/ArtsHJW06}.
+
+A test in QuickCheck looks something like the following:
+
+\begin{lstlisting}[language=Haskell]
+import Test.QuickCheck (quickCheck, (==>), Property)
+import Data.List (elem, delete)
+
+prop_remove :: [Int] -> Int -> Property
+prop_remove ls x = elem x ls ==> not (elem x (delete x ls))
+
+main = quickCheck prop_remove
+\end{lstlisting}
+
+In this test we test the property that given a list of integers and an integer,
+with the integer contained in the list,
+after removing the integer from the list it is not longer present.
+
+A similar property expressed in Hypothesis would be:
+
+\begin{lstlisting}[language=Python]
+from hypothesis import given, assume
+import hypothesis.strategies as st
+
+
+@given(st.lists(st.integers()), st.integers())
+def test_deleting(ls, i):
+    assume(i in ls)
+    ls.remove(i)
+    assert i not in ls
+\end{lstlisting}
+
+When run, these tests both do the same thing:
+They randomly generate a list of integers and an integer,
+if the integer is contained in the list they continue the test,
+otherwise they mark it as invalid.
+Once they have found a sufficient number of valid test cases that did not fail (100 by default) the test stops.
+If prior to that point they have found a counter-example to the property,
+they begin a process of test-case reduction to attempt to produce a smaller, simpler, example.
+
+The development of QuickCheck and its descendants in the context of Haskell has recently been very ably summarised in Rudy Braquehais's PhD thesis\cite{matela2017tools},
+so I do not propose to go into QuickCheck in great detail,
+but instead to situate it in the broader context of the software testing literature.
+
+As a result I will take the liberty to be significantly more opinionated in my review of the subject.
+
+The first piece of context to consider is that this combination of random testing and test-case reduction is at this point,
+from a research point of view,
+\emph{incredibly boring}.
+Random testing and test case reduction are both very well studied subjects---in
+the latter only since the original QuickCheck paper was published
+(the original paper on the subject being of a comparable age to QuickCheck itself\cite{DBLP:conf/issta/HildebrandtZ00}),
+but even at the time of publication Random testing was a very well known implementation technique (TODO:\ Citations).
+
+The novel feature of QuickCheck was in fact nothing to do with the quality of its testing,
+but that it provided a way of composing these generators together to make it easier to write arbitrary tests over arbitrary data types.
+
+This is not intended as a slight on the authors of QuickCheck,
+as they acknowledge this in the paper itself!
+
+\begin{quote}
+We have taken two relatively old ideas, namely specifications as oracles and random testing,
+and found ways to make them easily available to Haskell programmers.
+\end{quote}
+
+Thus from the very beginning the basic question of QuickCheck's design has not been one of advancing the state of the art of software testing research,
+but fundamentally a question of usability:
+How can we make it easier for people to use these ideas?
+
+Given this,
+what happened next may surprise you:
+The intervening period has consisted of users of QuickCheck and its descendants holding on to the rather bizarre belief that this sort of testing is in some way tied to functional programming.
+
+For example,
+consider the following quote from~\cite{matela2017tools}:
+
+\begin{quote}
+Although still useful,
+property-based testing is a bit less useful in the realm of imperative programming languages as property-based testing
+benefits from testing functions and modules that have no side-effects
+\end{quote}
+
+This is not to pick on the author of this quote specifically:
+It is a notion I've personally heard many times,
+this merely happens to be the most recent.
+
+In one sense this claim is true:
+It is much easier to test code that has no side-effects.
+On the other hand,
+it seems to ignore the fact that testing remains the most common tool for software correctness and is widespread in industry in almost every programming language,
+but if anything is \emph{especially} common in dynamically typed imperative programming languages,
+which according to this line of reasoning are the hardest to test.
 
 \chapter{Teach me your human notion of software testing}\label{chap:purposesoftesting}
 
 This chapter isn't written yet.
 In this chapter I will argue that our notion of what testing is for is flawed:
 Most testing cannot be about finding bugs,
-because the overwhelming majority of software has no non-trivial bugs until a negotiation process decides that a particular behaviour is a bug.
+because the overwhelming majority of software has no non-trivial bugs until a negotiation involving both the users and the authors of the software concludes that a particular behaviour is a bug.
 
 \chapter{Speaking a test's language}\label{chap:testinglanguage}
 
