@@ -26,78 +26,68 @@ but now also has a version for Ruby\footnote{\url{https://github.com/HypothesisW
 I will blur the distinction and simply refer to them all as ``Hypothesis''.
 
 Hypothesis is a library in the spirit of QuickCheck\cite{DBLP:conf/icfp/ClaessenH00} for \emph{property-based testing}.
-I will discuss in more detail what property-based testing actually \emph{is} in TODO,
-but the distinguishing feature of both Hypothesis and QuickCheck is that they provide generated data for user-defined test functions,
-allowing users to write tests that quantify over a range of data---instead
-of testing with a specific string,
-they can write a test that logically tests \emph{all} strings (although in practice they only test a finite number of strings).
+The distinguishing feature of such tools is that they make it easy for users to define tests that combine user-written specifications with some form of data generation.
+Such tests assert properties that are intended to hold for an entire class of inputs,
+although in practice only ever test on a finite number of inputs in any given run.
 
-Hypothesis is an interesting vehicle for research for two main reasons:
+I do not propose to do an extensive review of the existing literature on QuickCheck,
+for two main reasons.
 
-\begin{itemize}
-\item It is arguably the first widely used tool of its type that does not target a functional programming language\footnote{
-The other contender is theft (\url{https://github.com/silentbicycle/theft/}).
-Comparisons are odious,
-and theft is an excellent project,
-but Hypothesis almost certainly has significantly more usage than theft,
-and probably has for most of their shared lifetime.
-},
-and thus has many different challenges and aspects to it that are not present in the existing literature on property-based testing.
-\item Hypothesis has a novel and unusual underlying model,
-in which random generation is reframed as a parsing operation.
-This leads to a number of improvements,
-both current and potential,
-in its capabilities compared to existing property-based testing implementations.
-I will discuss these further in TODO.\ 
-\end{itemize}
+The first is that it would frankly be redundant.
+If you are interested in a detailed survey of QuickCheck and QuickCheck-related tools in the context of Haskell,
+I refer you to Rudy Braquehais's recent PhD thesis\cite{matela2017tools},
+where he ably summarizes it and a wide variety of related tools.
 
-Being based first and foremost on the work and impact in a software testing tool that is used in practice,
-my research necessarilly comes with a subgoal of bridging academic and industry notions of software testing.
-This is already to some extent implicit in the field---as
-I will discuss in TODO,
-QuickCheck style testing has a fairly large presence in industry.
-As a result,
-this literature review is necessarily \emph{multivocal} in the sense of~\cite{DBLP:conf/ease/GarousiFM16}---that is,
-I will make extensive reference to the so-called ``grey'' literature,
-is published outside of the formal peer review system.
-I will attempt to use this to explore the following two questions:
+The second is that despite the shared lineage,
+due to differing implementation strategies and contexts,
+Hypothesis actually has comparably little in common with QuickCheck that they do not both share in common with a much broader area of testing research.
 
-\begin{itemize}
-\item What is the proper context of property-based testing?
-\item How can be improve not just the state of the art in testing research,
-but also the adoption of the tools we develop?
-\end{itemize}
+QuickCheck nevertheless provides the starting point for many of the \emph{problems} that I will motivate,
+and where relevant I will of course first back to it and its descendants.
 
-Much of the latter question falls outside of research per se,
-but I believe it is vital to consider it both to increase the impact of research and also because it can inform interesting research questions.
+\chapter{Software Correctness in Practice}
 
-The rest of this literature review follows the following structure:
+Have you noticed that a lot of software is bad?
+If you haven't,
+let me break it to you gently:
+A lot of software is bad.
+
+Research on software correctness often begins with a grandiose discussion of this problem,
+and how it's only going to get worse over time.
+Typically the authors go on to suggest that their hot new research technique is the solution to it,
+their (often very good!) research is duly published,
+and the hot new research technique subsequently attracts exactly zero users in industry.
+
+I propose that \emph{if we actually care about the problems that we claim to care about},
+the two most critical questions in software testing research are the following:
 
 \begin{enumerate}
-\item In Chapter~\ref{chap:quickcheck} I will discuss what QuickCheck is and does,
-and explore some of the differences between it and its descendants,
-as well as other software testing tools.
-\item In Chapter~\ref{chap:purposesoftesting} I will ask ``What is testing \emph{for}?'',
-and argue that academia and industry have very different answers to this question.
-Within this framework, I will discuss the sub-question ``What is property-based testing and how can it help?''.
-\item In Chapter~\ref{chap:testinglanguage} I will talk about some of the novel design choices in Hypothesis,
-and discuss active areas of research that will inform the direction of my PhD.
-\item Finally in Chapter~\ref{chap:conclusion} I will round off with some closing remarks about the general space of software testing research and its role in bridging academia and industry.
+\item Why is nobody using our stuff?
+\item If they did, would it help?
 \end{enumerate}
 
-\chapter{Why is everything terrible?}
+One possible answer to the first question comes from ``A Few Billion Lines of Code Later''\cite{DBLP:journals/cacm/BesseyBCCFHHKME10}.
+They report on their experience of productionizing a static analyzer for C and C++,
+and make the following observations:
 
-This chapter isn't written yet.
-In this I will bemoan the state of the world and generally talk about how we're all doomed and nothing can fix that.
+\begin{enumerate}
+\item ``in the research lab a few people check a few code bases; in reality many check many. The problems that show up when thousands of programmers use a tool to check hundreds (or even thousands) of code bases do not show up when you and your co-authors check only a few.''
+\item ``in the lab the user's values, knowledge, and incentives are those of the tool builder, since the user and the builder are the same person. Deployment leads to severe fission; users often have little understanding of the tool and little interest in helping develop it''
+\end{enumerate}
 
-As James Mickens puts it\cite{mickens2014saddest}:
+To put it more bluntly,
+the tools we build probably don't work for most users,
+and even when they do the users might not care enough for it to matter.
 
-\begin{quote}
-``How can you make a reliable computer service?'' the presenter will ask in an innocent voice before continuing,
-``It may be difficult if you can’t trust anything and the entire concept of happiness is a lie designed by unseen overlords of endless deceptive power.''
-The presenter never explicitly says that last part,
-but everybody understands what's happening.
-\end{quote}
+When we build tools we do so with a certain view of the world in mind---we
+have a particular background and experience,
+we have particular goals,
+and we have a particular set of skills and knowledge.
+But,
+to use a term from user experience,
+\emph{we are not the users},
+and any belief that we might have that the users of our tools share that view of the world is a dangerous false consensus effect\cite{ross1977false},
+where we are building tools to support a large number of like-minded individuals who simply don't exist.
 
 \chapter{QuickCheck's friends and family}\label{chap:quickcheck}
 
@@ -251,7 +241,7 @@ so definitely worth including.
 \item ``Targeted property-based testing''\cite{DBLP:conf/issta/LoscherS17} is about how you can do what is basically hill climbing with restart to better test properties.
 This is relevant mostly as an example of why it's nice to be able to extend with new operations on generated data.
 \item ``Why is random testing effective for partition tolerance bugs?''\cite{DBLP:journals/pacmpl/MajumdarN18} is an interesting argument that random testing can and should work.
-\item ``Partition Testing Does Not Inspire Confidence``\cite{DBLP:journals/tse/HamletT90} is a good argument that random testing is pretty OK.
+\item ``Partition Testing Does Not Inspire Confidence``\cite{DBLP:journals/tse/HamletT90} is a good argument that random testing is pretty OK.\ 
 \item ``Behind Human Error''\cite{BehindHumanError} contains a lot of lucid discussion about error that I think is valuable for this sort of work.
 \item ``An Experimental Evaluation of the Assumption of Independence in Multiversion Programming''\cite{DBLP:journals/tse/KnightL86}---a
 lot of property-based testing is basically multiversion programming to do differential testing.
@@ -266,6 +256,18 @@ and how having the computer make things for a human to correct is much less stre
 \item ``When and what to automate in software testing? {A} multi-vocal literature review''\cite{DBLP:journals/infsof/GarousiM16}---this
 seems a natural fit.
 \end{itemize}
+
+\section{Really Want An Excuse To Haves}
+
+As James Mickens puts it\cite{mickens2014saddest}:
+
+\begin{quote}
+``How can you make a reliable computer service?'' the presenter will ask in an innocent voice before continuing,
+``It may be difficult if you can’t trust anything and the entire concept of happiness is a lie designed by unseen overlords of endless deceptive power.''
+The presenter never explicitly says that last part,
+but everybody understands what's happening.
+\end{quote}
+
 
 \input{./includes/bibsection.tex}
 
