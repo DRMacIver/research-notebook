@@ -195,49 +195,6 @@ can take their existing knowledge of how to test their software to write test or
 while using QuickCheck to simplify the process of test-case generation,
 which is less their area of expertise.
 
-\chapter{Property-based testing without functional programming}
-
-How well does this generalise?
-
-Haskell users are a particularly easy ``market'' for correctness tools,
-especially ones which are designed to evoke an impression of formal verification like QuickCheck\footnote{
-I used to jokingly describe QuickCheck's motivation as ``we wan't to do formal verification but it's too hard, so lets do testing instead''.
-Then various people who were around at the time told me that this was pretty much spot on,
-so now I still describe it that way but it's no longer a joke.
-}.
-
-So a natural question is whether this property-based testing works well outside of functional programming languages\footnote{
-In actual fact it is essentially impossible for this question to have a sensible yes or no answer.
-Neither ``functional programming language'' nor ``property-based testing'' are terms with a particularly well defined meaning,
-even before we get onto the entirely subjective question of what counts as ``working well''?
-Therefore this question serves not really as one that we are trying to answer,
-but one whose interpretation may suggest interesting directions for more specific investigations
-}.
-
-Certainly there seems to be a widespread belief that the answer is no.
-For example, to quote from~\cite{matela2017tools}:
-
-\begin{quote}
-Usability in imperative languages Although still useful, property-based testing is a
-bit less useful in the realm of imperative programming languages as property-based testing
-benefits from testing functions and modules that have no side-effects.
-\end{quote}
-
-QuickCheck has at this point been ported\footnote{with varying degrees of faithfullness---Hypothesis
-is probably an outlier in how completely unlike the original QuickCheck it is,
-but most vary to some greater or lesser degree,
-with only languages that are very close to Haskell able to do any sort of truly faithful port} to a large number of languages,
-but until recently it seems to have been most widely used
-
-However this doesn't appear to be true,
-except in the sense that it is true that \emph{all} testing benefits from testing functions and modules that have no side effects.
-Certainly there doesn't seem to be any difficulty in getting Python programmers to use Hypothesis.
-At the time of this writing libraries.io, an indexing site for open source software,
-lists 520 open source projects using Hypothesis\footnote{\url{https://libraries.io/pypi/hypothesis/usage}}.
-Python is a dynamically typed, mostly object oriented, imperative language,
-with relatively limited support for functional programming (e.g.\ the Python lambda implementation is restricted to simple expressions),
-which is quite a contrast to Haskell.
-
 \chapter{How Industry Looks at Testing Research}
 
 The following is from Dan Luu's ``One week of bugs''\footnote{\url{https://danluu.com/everything-is-broken/}}:
