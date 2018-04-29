@@ -195,51 +195,6 @@ can take their existing knowledge of how to test their software to write test or
 while using QuickCheck to simplify the process of test-case generation,
 which is less their area of expertise.
 
-\chapter{How Industry Looks at Testing Research}
-
-The following is from Dan Luu's ``One week of bugs''\footnote{\url{https://danluu.com/everything-is-broken/}}:
-
-\begin{quote}
-Given that people aren't going to put any effort into testing, what's the best way to do it?
-
-Property-based testing. Generative testing. Random testing. Concolic Testing (which was done long before the term was coined). Static analysis. Fuzzing. Statistical bug finding. There are lots of options. Some of them are actually the same thing because the terminology we use is inconsistent and buggy. I'm going to arbitrarily pick one to talk about, but they're all worth looking into.
-
-People are often intimidated by these, though.
-I've seen a lot of talks on these and they often make it sound like this stuff is really hard.
-Csmith is 40k LOC.\ 
-American Fuzzy Lop's compile-time instrumentation is smart enough to generate valid JPEGs.
-Sixth Sense has the same kind of intelligence as American Fuzzy Lop in terms of exploration, and in addition, uses symbolic execution to exhaustively explore large portions of the state space; it will formally verify that your asserts hold if it's able to collapse the state space enough to exhaustively search it, otherwise it merely tries to get the best possible test coverage by covering different paths and states.\ In addition, it will use symbolic equivalence checking to check different versions of your code against each other.
-
-That's all really impressive, but you don't need a formal methods PhD to do this stuff.
-You can write a fuzzer that will shake out a lot of bugs in an hour.
-Seriously.
-I'm a bit embarrassed to link to this, but this fuzzer\footnote{\url{https://github.com/danluu/Fuzz.jl}} was written in about an hour and found 20--30 bugs,
-including incorrect code generation,
-and crashes on basic operations like multiplication and exponentiation.
-My guess is that it would take another 2--3 hours to shake out another 20--30 bugs (with support for more types), and maybe another day of work to get another 20--30 (with very basic support for random expressions).
-I don't mention this because it's good.
-It's not.
-It's totally heinous.
-But that's the point.
-You can throw together an absurd hack in an hour and it will turn out to be pretty useful.
-\end{quote}
-
-Dan Luu is not a researcher,
-but interestingly the software he is talking about is the Julia programming language\cite{DBLP:journals/corr/abs-1209-5145},
-which has a fairly extensive publication track record\footnote{\url{https://julialang.org/publications/}}. 
-
-This anecdote suggests some key things:
-
-\begin{itemize}
-\item Very little in the way of advanced testing tools are currently being deployed in industry in any widespread manner.
-\item Some of this is due to an intimidation factor---these tools seem complicated,
-and as if they require as large a knowledge of the research field to use as they did to implement.
-\item Most software as deployed is sufficiently bad that even the most basic of these tools (a hand-written random input generator with very little time investment put into it) can find a significant number of bugs.
-\end{itemize}
-
-I am not aware of any significant studies about the adoption of testing tools (and after several conversations with researchers in the field believe this is because no such studies currently exist),
-but having spent some time trying to get people from industry 
-
 \chapter{Composable Test Case Reduction}
 
 As well as test-case \emph{generation},
