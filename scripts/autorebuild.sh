@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e -x -u
+
 if ! [ -d "venv" ] ; then
   rm -rf venv
   virtualenv venv
