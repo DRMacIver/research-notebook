@@ -18,9 +18,10 @@ Proceed with caution.
 
 Let me begin with some context.
 
-The focus of my PhD is an open source project I wrote (and many others now also contribute to) called \emph{Hypothesis}.
+The focus of my PhD is an open source project I wrote (and that many others now also contribute to) called \emph{Hypothesis}.
 Hypothesis was originally purely a Python library\footnote{\url{https://github.com/HypothesisWorks/hypothesis-python}},
-but now also has a version for Ruby\footnote{\url{https://github.com/HypothesisWorks/hypothesis-ruby}}.
+but now also has a version for Ruby\footnote{\url{https://github.com/HypothesisWorks/hypothesis-ruby}},
+with a Rust backend that will eventually form a common implementation for the two.
 I will blur the distinction and simply refer to them all as ``Hypothesis''.
 
 Hypothesis is a library in the spirit of QuickCheck\cite{DBLP:conf/icfp/ClaessenH00} for \emph{property-based testing}.
@@ -42,13 +43,6 @@ Hypothesis actually has comparably little in common with QuickCheck that they do
 
 QuickCheck nevertheless provides the starting point for many of the \emph{problems} that I will motivate,
 and where relevant I will of course first back to it and its descendants.
-
-\chapter{QuickCheck in Context}
-
-QuickCheck was introduced back in 2000,
-in ``QuickCheck: a lightweight tool for random testing of Haskell programs''\cite{DBLP:conf/icfp/ClaessenH00}.
-It has since been ported to many languages\footnote{\url{https://hypothesis.works/articles/quickcheck-in-every-language/}},
-with the most notable one being the commercial Erlang implementation\cite{DBLP:conf/erlang/ArtsHJW06}.
 
 A test in QuickCheck looks something like the following:
 
@@ -88,6 +82,17 @@ Once they have found a sufficient number of valid test cases that did not fail (
 If prior to that point they have found a counter-example to the property,
 they begin a process of test-case reduction to attempt to produce a smaller, simpler, example.
 
+QuickCheck and its descendants,
+including Hypothesis,
+are essentially just libraries designed to make it easier to write tests that do this,
+by providing some test running infrastructure and a library of combinators\footnote{
+In the original Haskell QuickCheck these are typically expressed using type classes rather than explicit combinators,
+but the Erlang version written by the same authors uses combinators,
+as do many other ports.
+Recently Hedgehog\footnote{\url{https://en.wikipedia.org/wiki/QuickCheck}} has introduced the combinator style in Haskell as well.
+}
+for specifying how to generate test cases.
+
 From a research point of view,
 this is an extremely boring idea,
 and the QuickCheck authors knew that when they proposed it.
@@ -99,18 +104,60 @@ as oracles and random testing, and found ways to make
 them easily available to Haskell programmers.
 \end{quote}
 
-Fundamentally,
-even at the time the paper was written nearly two decades ago,
 QuickCheck was never an attempt to push back the boundaries of testing research,
 but instead a paper about tool usability.
-The fundamental question posed by the paper is not ``can we test software better than we are currently doing?'' but taking as granted that we \emph{can},
-how do we get non-researchers to use these tools?
-QuickCheck proved a fairly convincing answer to this question.
+The fundamental question posed by the paper is not ``can we test software better than we are currently doing?'',
+but ``how do we get non-researchers to use better testing techniques?''.
 
-This answer highlights what I think is an interesting split between researchers and practitioners,
-which is that they have very different views on the \emph{oracle problem}.
+QuickCheck's answer to this question has proven fairly popular.
+Most programming languages have a library inspired by it (often several)\footnote{\url{https://en.wikipedia.org/wiki/QuickCheck}},
+and many of these libraries are widely used.
+\url{http://libraries.io} currently (as checked on 2018--04--29) lists 132 open source repositories using QuickCheck\footnote{\url{https://libraries.io/hackage/QuickCheck/usage}} and 532 using Hypothesis\footnote{\url{https://libraries.io/pypi/hypothesis/usage}}.
+Other popular implementations that libraries.io did not seem to have good data for include test.check\footnote{\url{https://github.com/clojure/test.check/}} for Clojure and ScalaCheck\footnote{\url{http://www.scalacheck.org/}} for Scala.
 
-The oracle problem, put colloquially, is that you can't know whether a piece of software is correct unless you know what the software is supposed to do.
+I am currently focused on answering two follow-on questions:
+
+\begin{itemize}
+\item Given that usability is the main raison d'être of QuickCheck style testing,
+how can we improve that further?
+\item Can we extend this sort of tooling beyond random testing which,
+while surprisingly effective in practice,
+ultimately limits the effectiveness of the resulting tests for more intensive testing?
+\end{itemize}
+
+Although the first question seems more a matter of engineering than research,
+as I shall discuss in Chapter~\ref{TODO} there are some interesting research questions implied by it.
+
+\chapter{A Note on Economics}
+
+One interesting aspect of QuickCheck that makes it unusual among software from testing research is that it is in many ways much more aligned with the needs of the users than the needs of researchers.
+
+Any given testing project has essentially two places where time needs to be invested:
+
+\begin{itemize}
+\item Time invested in understanding \emph{the general problem of testing}.
+\item Time invested in understanding \emph{the behaviour of the specific system under test}.
+\end{itemize}
+
+Researchers in software testing differ from users of testing tools in terms of which one of these is ``their job''---a
+researcher will happily invest a great deal of time into understanding the general problem of testing,
+but unless they are focused on a very specific problem domain (such as testing C compilers,
+of which there are only a few widely used open source ones,
+and all of which share a common specification and similar patterns of behaviour),
+they will typically want to apply their tools to \emph{many} systems under test,
+with relatively little interst in investing time on each one.
+
+In contrast,
+a practitioner has typically already invested significant time into understanding the system they are testing,
+and if they have not already they will do so (possibly through the process of testing it!),
+but even if they are interested in the general problem of testing they probably do not have a great deal of time to spend on it.
+
+One way in which this comes up,
+and where QuickCheck differs significantly from many other approaches,
+is the \emph{oracle problem}.
+The oracle problem,
+colloquially,
+is that you can't know whether a piece of software is correct unless you know what the software is supposed to do.
 Thus every test consists (possibly implicitly) of two parts:
 
 \begin{itemize}
@@ -120,7 +167,7 @@ Thus every test consists (possibly implicitly) of two parts:
 
 Typically test oracles are sound but not complete---that is,
 if the test oracle says that the behaviour is \emph{incorrect} then the behaviour is actually incorrect,
-but the behaviour may be incorrect in some way that the test oracle is unaware of.
+but the behaviour may be incorrect in some way that the test oracle is unable to detect.
 
 The current research on identifying test oracles is well described in~\cite{DBLP:journals/tse/BarrHMSY15},
 but to summarize along slightly different axes than they do,
@@ -138,44 +185,15 @@ can't determine whether the current behaviour is correct,
 but allows you to determine when it changes.
 \end{itemize}
 
-(TODO:\ Give cites of prominent examples of the above)
-
 Practitioners on the other hand adopt a quite different approach to finding test oracles:
 They just write them,
 typically in the host language,
 as part of their normal testing process.
-
-The big difference between a researcher and a practitioner in software testing is this:
-A researcher considers the topic of test-case generation to be a fascinating object of study that they can devote a great deal of time to improving,
-and finding a test oracle for a particular system under test involve lots of boring non-research work in order to determine the specific goals and operational constraints of the software are.
-A workflow where you can just check out a repository from, say, GitHub, run your software against it, and see what happens is \emph{great},
-because it scales very well to many different projects without requiring any project specific work.
-while test-case generation is a distraction which has essentially no business value except to the degree that it takes them less time and gains them more insight into their software's behaviour\footnote{
-You may note that I did not say ``finds more bugs''.
-The role of testing as primarily a bug-finding activity is another major difference between researchers and practitioners---in
-many ways testing in practice,
-especially unit testing,
-is perceived as a design tool as much as a bug-finding activity.
-},
-which limits the amount of time they are willing to invest into it.
-
-This creates a fairly stark difference in the priorities of researchers and practitioners:
-Each regards as important the part that the other would prefer to avoid.
-In an ideal world,
-this would be a great opportunity---the
-
-Framed in this light,
-QuickCheck is a library that takes advantage of that opportunity,
-and is designed primarily around making test-case generation accessible to non-researchers by providing a composable library of combinators for defining test-case generators\footnote{
-Although in the original QuickCheck these combinators were defined in terms of type classes,
-and any given type was considered to have some canonical distribution of test cases,
-but this has proven to be inessential.
-The Erlang version of QuickCheck (written by at least one of the original authors of the Haskell version)\cite{DBLP:conf/erlang/ArtsHJW06},
-adopts a purely combinator based approach,
-as do many others.
-Even Haskell users are coming around the the combinator based approach.
-A recent contribution to the field is HedgeHog\footnote{\url{https://github.com/hedgehogqa}},
-which is a Haskell library (with several ports to other language) taking the combinator based approach for defining generators}.
+QuickCheck simply embraces this,
+which I believe is a key feature of its success---practitioners
+can take their existing knowledge of how to test their software to write test oracles,
+while using QuickCheck to simplify the process of test-case generation,
+which is less their area of expertise.
 
 \chapter{Property-based testing without functional programming}
 
@@ -265,61 +283,6 @@ and as if they require as large a knowledge of the research field to use as they
 I am not aware of any significant studies about the adoption of testing tools (and after several conversations with researchers in the field believe this is because no such studies currently exist),
 but having spent some time trying to get people from industry 
 
-\chapter{Random Testing is Good, Actually}
-
-A common criticism of QuickCheck is its use of \emph{random testing}.
-
-The two main criticisms implicit in this are:
-
-\begin{itemize}
-\item This makes tests non-repeatable (this typically comes from practitioners).
-\item Random testing is a fairly ineffective technique and we know many better ones (this typically comes from researchers).
-\end{itemize}
-
-The first criticism is easily disposed of:
-Every implementation of QuickCheck I am aware of (and certainly the original) explicitly makes use of a \emph{pseudo-random number generator} (PRNG) of some sort,
-so the test is easily repeatable just by printing the seed that lead to it\footnote{Hypothesis actually has a more elaborate mechanism for repeating tests}.
-This can be done either automatically or by printing the seed as part of the failing run.
-
-The second is more interesting.
-Partly the best response to it is that it is correct---purely
-random testing \emph{is} very limited compared to more advanced options---but
-it is not as strong as it may seem.
-Random testing is good, actually.
-
-The reason for this is three-fold:
-
-\begin{itemize}
-\item Random testing is \emph{cheap}.
-It is extremely easy to work with, and tends to be much faster than smarter techniques.
-\item Random testing scales well to arbitrarily complex software,
-because it does not have to care about the complexity of the software at all!
-\item Random testing is much more effective than naive arguments might suggest. A classic result\cite{DBLP:journals/tse/HamletT90} shows that partition testing for example is not substantially more effective than random testing,
-and recent analysis\cite{DBLP:journals/pacmpl/MajumdarN18}, of the effectiveness of Jepsen (a random tester for distributed systems)\footnote{\url{https://jepsen.io/}} showed that in fact we should expect random testing to cover a large number of coverage targets in only logarithmically many test executions.
-\item Most software is sufficiently buggy that \emph{any} improvement in testing will likely find significant bugs in it.
-Given that most software has not yet been subjected to random testing,
-random testing will tend to be sufficient for finding bugs in it even if there are many it doesn't find.
-\end{itemize}
-
-The following two perspectives from industry are informative.
-
-The following comes from lcamtuf (Michal Zalewski)'s historical notes on the development of the American Fuzzy Lop (AFL) fuzzer\footnote{\url{http://lcamtuf.coredump.cx/afl/historical_notes.txt}}:
-
-\begin{quote}
-Speed.
-It's genuinely hard to compete with brute force when your ``smart''
-approach is resource-intensive. If your instrumentation makes it 10x more
-likely to find a bug, but runs 100x slower, your users are getting a bad
-deal.
-
-To avoid starting with a handicap, afl-fuzz is meant to let you fuzz most of
-the intended targets at roughly their native speed---so even if it doesn't
-add value, you do not lose much.
-\end{quote}
-
-Thus we should expect that random testing does an excellent job of picking the low-hanging fruit in software that is not already tested this way,
-and it is unlikely that we can get people to adopt better techniques unless we make it as easy or easier to adopt them as it is to adopt random testing.
-
 \chapter{Composable Test Case Reduction}
 
 As well as test-case \emph{generation},
@@ -373,6 +336,7 @@ Two approaches have been approached to fix this which would allow the natural mo
 \item In SmartCheck\cite{DBLP:conf/haskell/Pike14},
 test-case reduction is fully generic and works for arbitrary algebraic data types.
 \item In the rose-tree based approach proposed by Reid Draper in~\cite{FreeShrinking},
+\end{enumerate}
 
 \chapter{Goals}
 
@@ -442,7 +406,6 @@ As James Mickens puts it\cite{mickens2014saddest}:
 The presenter never explicitly says that last part,
 but everybody understands what's happening.
 \end{quote}
-
 
 \input{./includes/bibsection.tex}
 
