@@ -6,3 +6,5 @@ pyparsing==2.2.0
 requests
 IPython
 bs4
+hypothesis
+pytest

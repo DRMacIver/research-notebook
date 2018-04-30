@@ -1,6 +1,6 @@
 \input{./includes/preamble.tex}
 
-\title{PhD Report}
+\title{Literature Review for PhD}
 \author{David R. MacIver}
 
 \begin{document}
@@ -8,6 +8,17 @@
 \maketitle
 
 \tableofcontents
+
+\chapter*{Preface}
+
+This is the beginnings of the literature review and framing sections for my PhD Thesis.
+It's currently in a considerably rougher state than I'd like,
+so proceed with some caution.
+
+As well as a bunch of missing content,
+there are definitely going to be a few places where I've made some huge leaps of logic or forgot to introduce terminology.
+
+Sorry.
 
 \chapter{Background}\label{chap:introduction}
 
@@ -150,6 +161,8 @@ If it finds a test case which makes the test oracle fail it then performs test-c
 which attempts to turn the failing example into a simpler and easier to read one,
 and shows the reduced example to the user.
 
+This sort of testing is commonly referred to as \emph{property-based testing}\cite{DBLP:conf/erlang/ArtsHJW06}.
+
 From the point of view of the core questions of testing research---test-case generation and identifying test oracles---QuickCheck
 is a very boring piece of software (and this was mostly true even when it was created).
 QuickCheck uses developer-written test oracles (in the original paper these are framed as ``specifications'',
@@ -220,6 +233,213 @@ without requiring users to understand or even be aware of those techniques?
 
 Although the first question seems more a matter of engineering than research,
 as I shall discuss in Chapter~\ref{TODO} there are some interesting research questions implied by it.
+
+\chapter{Challenges in Property-Based Testing}
+
+In this chapter I will discuss some of the challenges and limitations of existing solutions that I am seeking to overcome.
+Specifically:
+
+\begin{itemize}
+\item QuickCheck and most of its descendants have a significant \emph{test-case validity problem}\cite{DBLP:conf/pldi/RegehrCCEEY12},
+where many of the test cases it tries may be unsuitable for the provided oracle.
+\item Existing attempts to 
+\item In many cases,
+QuickCheck requires a significant amount of expertise from the user to get high quality results.
+\end{itemize}
+
+\section{Test Case Validity in Property-Based Testing}\label{sec:validity}
+
+The \emph{test-case validity problem}\cite{DBLP:conf/pldi/RegehrCCEEY12} is the issue that a given test oracle may only be suitable for some range of test cases.
+The example in the context it was proposed is that Csmith tests C compilers by evaluating them on C programs that are free of undefined and implementation-defined behaviour,
+then comparing the results across multiple compilers and seeing if they differ.
+Csmith is able to guarantee that the programs it generates are valid for this test oracle,
+but the property may be lost during test-case reduction as C-Reduce cannot guarantee that without using external checkers.
+
+It's important to note from this that the inputs are invalid \emph{for the test case}.
+A program that exhibits undefined behaviour is not an invalid input to the compiler (undefined behaviour is fundamentally a runtime property),
+but the test oracle would return an incorrect answer when evaluated on it.
+
+This problem crops up in much the same way in most property-based testing libraries.
+For example,
+consider the following test:
+
+\begin{lstlisting}
+from hypothesis import given, assume
+import hypothesis.strategies as st
+
+import math
+
+@given(st.floats())
+def test_sqrt_is_positive(x):
+    assume(x >= 0)
+    assert math.sqrt(x) >= 0
+\end{lstlisting}
+
+This test says that for any non-NaN non-negative floating point number,
+its sqrt is positive.
+This test correctly passes.
+
+The \texttt{assume} function used specifies a precondition on the test that allows it to reject invalid inputs.
+Hypothesis then essentially performs rejection sampling on the generated test cases,
+halting the test whenveer an assumption is false.
+
+The rejection sampling is not a major problem in this case,
+because a test case is accepted with probability close to half,
+but it degrades performance rapidly as you start to build more complicated test cases,
+and also biases the distribution significantly in some cases.
+
+For example,
+suppose we had something like the following:
+
+\begin{lstlisting}
+from hypothesis import given, assume
+import hypothesis.strategies as st
+
+@given(st.lists(st.floats()))
+def test_something_about_lists(xs):
+    assume(all(x >= 0 for x in xs))
+\end{lstlisting}
+
+We are now making an assumption about each element of a list.
+This means that we accept a list of length \(n\) with probability \(2^{-n}\).
+As well as significantly degrading the performance of testing,
+this also creates a very strong bias towards short lists on the test cases that we \emph{do} accept.
+
+As such,
+we frequently want to build these sorts of conditions into the generated data rather than the test.
+
+For example we could write the first test instead as:
+
+\begin{lstlisting}
+from hypothesis import given, assume
+import hypothesis.strategies as st
+
+import math
+
+@given(st.floats(min_value=0))
+def test_sqrt_is_positive(x):
+    assume(x >= 0)
+    assert math.sqrt(x) >= 0
+\end{lstlisting}
+
+This will cause Hypothesis to use a generator that always produces non-negative floats,
+avoiding the rejection sampling.
+
+A natural question about this test however is whether we still need the \texttt{assume} call.
+After all,
+if the test-case generator always produces non-negative numbers,
+the precondition seems entirely redundant.
+
+Whether this is the case varies from library to library,
+but it is \emph{not} redundant in QuickCheck (either the Haskell version or the later Erlang one).
+In many implementations,
+shrinking is based not on the generator but on the type of the generated value,
+so shrinking may try values that could never have been generated.
+In the above test,
+the shrinker might for example try replacing some large generated float with the much simpler value `-1.0`,
+which would be invalid for the test case.
+
+This is not the case in Hypothesis,
+where the shrinking is a built in part of the data generation at a very low level.
+Additionally,
+an earlier system which achieved similar effects was introduced by Reid Draper in~\cite{FreeShrinking},
+and is in use in Clojure's test.check\footnote{\url{https://github.com/clojure/test.check}} and Hedgehog\footnote{\url{https://github.com/hedgehogqa/}}.
+I will discuss the differences between the two systems and their trade-offs in the next section.
+
+All else being equal,
+having a single source of truth for what a valid test case looks like seems obviously better,
+whether it is specified as preconditions or generators.
+Aside from the redundant work,
+having multiple sources of truth results in the two potentially getting out of sync.
+
+Additionally,
+in many cases specifying the full precondition for what a valid test-case looks like may be substantially harder than merely generating one!
+e.g.\ while Csmith is a highly non-trivial project,
+it's a lot simpler than the semantics checking interpreters that C-Reduce requires to maintain validity!
+
+Thus,
+in order to achieve this,
+we want to ensure that the following principle holds:
+Every \emph{reduced} test-case is one that could have been generated with non-zero probability.
+This ensures that all properties that hold for every generated test-case also hold for every reduced test-case
+(properties which merely hold with \emph{high} probability may of course still be violated by the reducer).
+
+\section{Composing Test-Case Reduction}
+
+Having discussed in Section~\ref{sec:validity} why we want a close relationship between test-case generation and reduction,
+a natural approach is to somehow integrate the reduction into the generation process.
+Unfortunately this leads to some difficulties.
+
+A key property of random test-case generation that makes it so appealing is that is highly composable.
+Specifically it has the structure of a \emph{monad}\footnote{
+In QuickCheck it is only ``morally'' a monad,
+as it technically violates the monad laws.
+However this is easily fixed by changing the way it handles its random state.
+} (in fact a monad with zero).
+Without belabouring the category theoretic aspects of this,
+what this means is that you can chain arbitrary data generators together---you
+can generate a value,
+do some more generation based on that,
+and the whole result is still a perfectly normal test-case generator.
+This property is what allows for the easy definition of a combinator library for defining test-case generators.
+
+Unfortunately,
+while test-case \emph{generation} has this property,
+test-case reduction (and many other natural operations on test cases) do not share it.
+
+The problem with composing test-case reducers as they are normally written---as
+a local optimisation pass on generated values---is
+that in order to transform one test-case reducer into another we need to know how to go in \emph{both} directions---you
+have to transform the new value into the original format,
+run the test-case reducer on it,
+and transform it back.
+The monadic interface only gives us one direction of this.
+
+The solution proposed by Reid Draper\footnote{\url{https://mail.haskell.org/pipermail/libraries/2013-November/021674.html}} and implemented in test.check is to integrate shrinking into the generation process.
+Instead of generating a single value,
+an entire lazy tree of shrunk values is generated:
+
+\begin{lstlisting}[language=Haskell]
+data RoseTree a = RoseTree a [RoseTree a]
+
+newtype Generator a = Generator { unGen :: StdGen -> Int -> a }
+
+newtype Gen a = Gen (Generator (RoseTree a))
+\end{lstlisting}
+
+These can then be composed more straightforwardly.
+e.g. you can compose a Generator a with a function \(f :: a \to b\) by applying \(f\) to the generated value at the root of the rose tree,
+and recursively applying that to each of the children,
+so that shrunk values on the composed generator are shrunk values of the original generator with \(f\) applied to them.
+
+Unfortunately while this approach \emph{does} compose monadically,
+it does not do so very well.
+
+Suppose you have something like the following Hypothesis code:
+
+\begin{lstlisting}[language=Python]
+import hypothesis.strategies as st
+
+sized_lists = st.integers(
+  min_value=0, max_value=0
+).flatmap(
+  lambda n: st.lists(st.floats(), min_size=n, max_size=n)
+)
+\end{lstlisting}
+
+In this we draw a length value between \(0\) and \(10\) and then draw a list of that size.
+
+In this rose tree based approach the shrinks that are available to us are:
+
+\begin{itemize}
+\item Reduce the value of \(n\) and take the root of the generated rose tree for the reduced \(n\).
+Typically this takes a prefix of the generated list.
+\item Shrink individual values within the generated list.
+\end{itemize}
+
+The documentation for test.check includes an example much like this\footnote{\url{https://github.com/clojure/test.check/blob/master/doc/growth-and-shrinking.md\#unnecessary-bind}} and shows the problems that can arise:
+Often you will end up with useless values at the beginning of the list that could easily have been deleted by a test-case reducer specialized to the problem,
+but were unavailable to the rose tree approach because it is unable to make any shrinks that lower \(n\) and touch the generated values.
 
 \chapter{Operations on Test Cases}
 
@@ -402,5 +622,4 @@ but everybody understands what's happening.
 \end{quote}
 
 \input{./includes/bibsection.tex}
-
 \end{document}
