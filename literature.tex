@@ -18,16 +18,18 @@ so proceed with some caution.
 As well as a bunch of missing content,
 there are definitely going to be a few places where I've made some huge leaps of logic or forgot to introduce terminology.
 
-Sorry.
+Sorry.\todo{I have signposted some of the most glaring omissions with comments like this.}
 
 \chapter{Background}\label{chap:introduction}
 
-My work is concerned with the process of \emph{testing} software.
-Testing consists of a series of tests,
-each of which typically returns pass or fail,
-with a fail indicating some defect in the software (or in the testing process)\footnote{
+My research is concerned with the process of \emph{testing} software.
+
+To begin with some working definitions,
+testing consists of a series of tests,
+each of which runs some code and returns pass or fail.
+A result of fail indicates some defect in the software being tested (or in the testing process)\footnote{
 This terminology and usage is in fact somewhat controversial,
-and the software testing/QA community of practitioners would often refer to this as \emph{checking},
+and the community of practitioners in software testing/QA would often refer to this as \emph{checking},
 and the individual steps as \emph{checks}.
 James Bach presents an enlightening article discussing these terms at \url{http://www.satisfice.com/blog/archives/856}.
 However,
@@ -231,10 +233,13 @@ how can we improve that further to get wider spread adoption of these techniques
 without requiring users to understand or even be aware of those techniques?
 \end{itemize}
 
-Although the first question seems more a matter of engineering than research,
-as I shall discuss in Chapter~\ref{TODO} there are some interesting research questions implied by it.
+Although much of this is more a matter of engineering than research,
+I've already \emph{done} enough of the engineering to have a fairly active user base,
+and it has implied a number of interesting research questions which,
+to the best of my knowledge,
+are currently unsolved.
 
-\chapter{Challenges in Property-Based Testing}
+\chapter{Challenges in Existing Work}
 
 In this chapter I will discuss some of the challenges and limitations of existing solutions that I am seeking to overcome.
 Specifically:
@@ -242,9 +247,11 @@ Specifically:
 \begin{itemize}
 \item QuickCheck and most of its descendants have a significant \emph{test-case validity problem}\cite{DBLP:conf/pldi/RegehrCCEEY12},
 where many of the test cases it tries may be unsuitable for the provided oracle.
-\item Existing attempts to 
+\item Existing attempts to overcome this problem suffer from limitations in how they compose,
+leading to large and potentially difficult to understand test cases. 
 \item In many cases,
-QuickCheck requires a significant amount of expertise from the user to get high quality results.
+QuickCheck requires a significant amount of expertise from the user to get high quality results,
+which can cause testing to perform slowly or miss bugs.
 \end{itemize}
 
 \section{Test Case Validity in Property-Based Testing}\label{sec:validity}
@@ -395,7 +402,9 @@ run the test-case reducer on it,
 and transform it back.
 The monadic interface only gives us one direction of this.
 
-The solution proposed by Reid Draper\footnote{\url{https://mail.haskell.org/pipermail/libraries/2013-November/021674.html}} and implemented in test.check is to integrate shrinking into the generation process.
+The solution proposed by Reid Draper\footnote{\url{https://mail.haskell.org/pipermail/libraries/2013-November/021674.html}}
+\todo{I think this needs better explaining, possibly with more Haskell, but Reid's original email's examples don't actually compile so I'd need to write it from scratch.}
+and implemented in test.check is to integrate shrinking into the generation process.
 Instead of generating a single value,
 an entire lazy tree of shrunk values is generated:
 
@@ -440,6 +449,149 @@ Typically this takes a prefix of the generated list.
 The documentation for test.check includes an example much like this\footnote{\url{https://github.com/clojure/test.check/blob/master/doc/growth-and-shrinking.md\#unnecessary-bind}} and shows the problems that can arise:
 Often you will end up with useless values at the beginning of the list that could easily have been deleted by a test-case reducer specialized to the problem,
 but were unavailable to the rose tree approach because it is unable to make any shrinks that lower \(n\) and touch the generated values.
+
+This problem appears to be insurmountable if one retains the rose tree based approach.
+I will discuss further how Hypothesis overcomes it,
+with a quite different implementation,
+in Chapter~\ref{chap:hypothesis}.
+
+\section{Generating High-Quality Examples}~\label{sec:goodexamples}
+
+As discussed in Chapter~\ref{chap:introduction},
+the goal of property-based testing libraries such as QuickCheck and Hypothesis is to make it easier for people to generate test cases,
+by providing a library of combinators as building blocks that people can use.
+
+Ideally,
+all generators produced using these building blocks would be in some sense \emph{high quality}---they
+would achieve a reasonable distribution over the data that is good at exposing bugs.
+It is currently unclear,
+and frankly unlikely,
+that this is the case in most property-based testing libraries (including Hypothesis).
+Generation of random values is one of those subjects that can soak up as much time as you're willing to put into it but,
+fortunately,
+it seems that even fairly low quality random generation is good at finding bugs in most software. \todo{This claim needs to be much better supported.}
+
+Some limitations of current systems include:
+
+\begin{itemize}
+\item 
+When generating examples we want to ensure that they are not too large,
+in order to ensure fast testing.
+The approach adopted by QuickCheck is to impose a hard cap on the size of examples,
+using an explicit size parameter.
+It seems likely that in many cases this produces a highly biased distribution---for example,
+it is very unlikely for this approach to ever produce a highly unbalanced tree because of the tendency for subtrees to be very close to the limit.
+An optimal solution for this is more likely to look something like a Boltzmann sampler\cite{DBLP:journals/cpc/DuchonFLS04},
+where all values of the same size are generated with equal probability.
+This solution also has problems in the other direction,
+where the generated examples may be too large due to the impossibility of making a universally correct choice---the
+average length of a list of integers should probably be larger than the average length of a list of lists of integers,
+as the latter has complex elements that themselves contribute to the total size of the test case.
+\item
+Conversely,
+there are some values that we want to generate with much higher probability than a uniform distribution would suggest!
+In~\cite{DBLP:conf/sfp/Midtgaard17} they showed an example that used an OCaml port of QuickCheck to find some very long-standing bugs in a Patricia trie implementation,
+but these bugs were not found until a custom integer generator was written that introduced a deliberate bias towards certain integers (very small integers, max\_int and min\_int).
+\item Random testing is in some sense intrinsically limited to being unable to find certain classes of bugs,
+due to its tendency to concentrate around certain parameters.
+For example, recent work in targeted property-based testing\cite{DBLP:conf/issta/LoscherS17} showed how being able to maximize (or minimize) some value related to the test allowed for finding interesting classes of bugs that would never have been found by a pure random generator.
+Their approach involved extending PropEr (an Erlang property-based testing library) with mutation operators and performing a randomized hill-climbing algorithm.
+Note that mutation suffers from much the same problems as shrinking,
+with regards to both composition and test-case validity.
+\end{itemize}
+
+\todo{The above all need elaborating on and expanding into their own subsections.}
+
+Ideally a tool would allow for improving all of these in some sense ``automatically'',
+without a user having to worry about these details.
+
+\chapter{The Hypothesis Approach}\todo{This section is currently no more than a sketch and mostly exists because the previous chapters felt like they were left hanging without a punchline without it.}
+
+The core design of Hypothesis is informed by the test-case validity problem discussed in Section~\ref{sec:validity}:
+The idea that any test case provided should be one that could have been generated with non-zero probability is baked into the core design of Hypothesis.
+Test-case reduction is then achieved by manipulating the generation process.
+
+The observation that underlies this is that a randomized generator may instead be viewed as a parser,
+with the generated values being the results of parsing particular inputs.
+This is because random generation is not truly random,
+but instead is based on some pseudo-random number generator (PRNG).
+Typically the low level interface provided by a PRNG is something like the \texttt{getrandbits} method in Python,
+which returns the next \(n\) random bits from the PRNG as an integer.
+
+This interface can easily be recreated as a parsing one:
+Given some underlying byte buffer,
+\texttt{getrandbits(n)} can read the next \(\ceil{\frac{n}{8}}\) bytes and turn them into an integer,
+masking off the high bits.
+If this results in us reading past the end of the buffer,
+we simply declare this representation invalid and the parse fails.
+
+The nice thing about this representation is that it allows us to manipulate the generated test cases in a very concrete manner,
+because we have a representation which will always lead to either a test case that could have been generated with non-zero probability when drawing uniformly at random,
+or a rejected input.
+
+Additionally,
+the length of the input byte stream consumed by the parser typically corresponds very well to some notion of size for the generated data:
+Most generated elements will be represented in the byte stream in some way.
+e.g. if you had a list of integers,
+each generated integer would be present in the byte stream in some way,
+so the length of the list and the length of the byte stream would be well correlated
+(possibly not perfectly---the way that the integers are generated might consume a variable number of byte streams).
+
+We then define a \emph{reduction order}, \(\prec\), on these byte streams to aid shrinking.
+We choose \(\prec\) to be the \emph{shortlex} order:
+
+\begin{definition}[Shortlex order]\label{def:shortlex}
+Let $s$ and $t$ be byte streams.  Then
+\(s \prec t\) if and only if \(|s| < |t|\), or \(|s| = |t|\) and \(s < t\) in the lexicographic order (considering bytes as unsigned integers).
+\end{definition}
+
+Test-case reduction now becomes the problem of finding a \(\prec\)-minimal input byte stream that leads to a failing test case.
+Unfortunately,
+doing this globally is intrinsically exponential,
+so we typically only find a local minimum,
+but nevertheless the current heuristics in the Hypothesis test-case reducer have proven very powerful in practice.
+
+By optimising for both lexicographic ordering as well as size,
+we achieve two things:
+The first is that it is easy to implement standard shrinking operations in QuickCheck where,
+for example,
+integers are replaced with ones closer to \(0\).
+The second is that this allows for a form of test-case normalization\cite{DBLP:conf/issta/GroceHK17},
+which tries to ensure that the same bug will always be represented by the same test case.
+
+Beyond shrinking,
+this approach also allows for test-case \emph{mutation}.
+By changing small parts of the underlying test-case representation,
+Hypothesis can mutate its generated examples while retaining the validty guarantees it provides,
+and without requiring users to write custom mutation operators.
+
+Currently this functionality is very primitive in Hypothesis.
+It has been more thoroughly explored in Crowbar\footnote{\url{https://github.com/stedolan/crowbar}},
+an OCaml based library that uses American Fuzzy Lop\footnote{\url{http://lcamtuf.coredump.cx/afl/}} (AFL) to power a QuickCheck like interface.
+
+I think it likely that a number of specializations of the basic AFL approach can be applied to this problem---the
+parsed languages tend to have a very specific character,
+and we can use information from the parser itself to feed back into the mutation process.
+Additionally,
+because of how Hypothesis (and other libraries like it) tend to be run,
+it is often interesting to try to achieve a much faster start than AFL,
+which makes techniques such as those proposed in~\cite{DBLP:conf/ccs/BohmePR16,DBLP:journals/corr/abs-1709-07101} especially attractive.
+
+The sizing problem discussed in Section~\ref{sec:goodexamples} is also one that I hope to be able to alleviate better.
+Hypothesis currently has a very ad hoc solution (it forces certain bytes to zero when the example is getting too large,
+which forces most generators into a ``shrinking direction'',
+then shuffles and reruns the byte array to attempt to debias).
+
+I'm currently exploring the possibility of an approach based on language inference.
+The set of all strings of length \(\leq n\) in any language is finite,
+and thus regular,
+so are amenable to language inference through Angluin's classic L* algorithm\cite{DBLP:journals/iandc/Angluin87}.
+Deriving a Boltzmann sampler for a regular language from its corresponding deterministic finite automaton is relatively straightforward (Boltzmann sampling of regular languages from more compact representations is \emph{not} straightforward, but has been studied in e.g.~\cite{darrasse2010boltzmann}),
+and Boltzmann samplers have excellent properties for size control,
+and achieve the goal of generating uniformly at random from all values of a particular size.
+
+\todototoc{}
+\listoftodos{}
 
 \input{./includes/bibsection.tex}
 \end{document}
