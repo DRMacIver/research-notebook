@@ -9,7 +9,7 @@
 
 \tableofcontents
 
-\chapter{Introduction}
+\chapter{Introduction}\label{chap:introduction}
 
 NB:\ This literature review is very much a work in progress and is not really ready for public consumption.
 It is and will be highly fragmented,
@@ -112,7 +112,7 @@ but ``how do we get non-researchers to use better testing techniques?''.
 QuickCheck's answer to this question has proven fairly popular.
 Most programming languages have a library inspired by it (often several)\footnote{\url{https://en.wikipedia.org/wiki/QuickCheck}},
 and many of these libraries are widely used.
-\url{http://libraries.io} currently (as checked on 2018--04--29) lists 132 open source repositories using QuickCheck\footnote{\url{https://libraries.io/hackage/QuickCheck/usage}} and 532 using Hypothesis\footnote{\url{https://libraries.io/pypi/hypothesis/usage}}.
+\href{http://libraries.io}{libraries.io} currently (as checked on 2018--04--29) lists 132 open source repositories using QuickCheck\footnote{\url{https://libraries.io/hackage/QuickCheck/usage}} and 532 using Hypothesis\footnote{\url{https://libraries.io/pypi/hypothesis/usage}}.
 Other popular implementations that libraries.io did not seem to have good data for include test.check\footnote{\url{https://github.com/clojure/test.check/}} for Clojure and ScalaCheck\footnote{\url{http://www.scalacheck.org/}} for Scala.
 
 I am currently focused on answering two follow-on questions:
@@ -195,13 +195,53 @@ can take their existing knowledge of how to test their software to write test or
 while using QuickCheck to simplify the process of test-case generation,
 which is less their area of expertise.
 
-\chapter{Composable Test Case Reduction}
+\chapter{Test Case Generation}\label{chap:generation}
+
+Test-case generation is,
+unsurprisingly,
+the process of producing a test case,
+typically for some specific system under test and test oracle for it.
+
+\chapter{Operations on Test Cases}
+
+As discussed in Chapters~\ref{chap:introduction} and~\ref{chap:generation},
+the key functionality of QuickCheck is that it provides a composable library of functions for specifying how to generate a test case.
+
+There are many natural operations on test cases beyond generating them.
+For example,
+given a test case we might want to:
+
+\begin{itemize}
+\item Serialize it into some binary format suitable for use as a regression test.
+\item Transform it into one that is easier to understand,
+through a process of \emph{shrinking}.
+I will discuss this in Section~\ref{sec:shrinking}.
+\item \emph{Mutate} it into a (not necessarily simpler) similar test-case,
+in order to better explore the search space. I will discuss this in Section~\ref{sec:fuzzing}.
+\end{itemize}
+
+It is possible in principle to do many of these operations fully generically based on the underlying representation of the values (e.g.~they could be algebraic data types,
+or the language could use some common object model).
+However this many violate abstraction boundaries---if
+e.g.\ a data type is designed to represent a collection of values as a balanced binary tree,
+manipulating its tree structure in a way that is unaware of that will produce an instance of the type that could never have been produced via its public API.\ 
+
+
+
+\section{Test-Case Reduction}\label{sec:shrinking}
 
 As well as test-case \emph{generation},
 and important part of QuickCheck's utility comes from test-case \emph{reduction}.
 
 Test-case reduction is the process of taking a failing test case and turning it into one that is in some sense ``smaller''.
-(TODO: Elaborate on this paragraph)
+Classically the notion of size for this problem is obvious---e.g.
+the classic approach is delta debugging\cite{DBLP:journals/tse/ZellerH02},
+which operates on arbitrary sequences and just uses the sequence length as its notion of size.
+
+Closely related is the notion of test-case normalization\cite{DBLP:conf/issta/GroceHK17},
+which attempts to to reduce ``semantic complexity'',
+making the test case simpler even when it does not reduce the size,
+by attempting to find a single canonical example of any given predicate.
 
 Although the initial version of QuickCheck did not come with test-case reduction,
 it was proposed by a user even before the paper was published:
@@ -213,7 +253,7 @@ and it is difficult to go back to the property and understand why it is a counte
 However,
 when the counter example is an element of a tree shaped datatype,
 the problem can often be located in one of the sub-trees of the counter example found.
-Gill extended the arbitrary class with an ew method
+Gill extended the arbitrary class with a new method
 
 \begin{lstlisting}[language=Haskell]
 smaller :: a -> [a]
@@ -226,17 +266,24 @@ In some cases much smaller counterexamples were found,
 greatly reducing the time to understand the bug found.
 \end{quote}
 
-These days this is a somewhat unsurprising observation---delta
-debugging was introduced as a method for test-case reduction in~\cite{DBLP:journals/tse/ZellerH02},
-and the benefit of augmenting random unit tests with test-case reduction is well known and has been studied in e.g.~\cite{DBLP:conf/issre/LeiA05,DBLP:conf/pldi/RegehrCCEEY12}.
-It was significantly more novel at the time,
-as the QuickCheck paper was published only a few months after the delta-debugging one.
+In modern QuickCheck this function is instead called \texttt{shrink},
+and the combined process of test-case reduction and normalization is referred to as \emph{shrinking}.
+I will use this terminology from now on except when referring to non-QuickCheck work.
+
+Shrinking has a fairly essential role in making QuickCheck useful---as indeed observed in the paper---as randomly generated counter-examples can be large and hard to read.
+Simple test-case reduction methods have proven highly effective at reducing these.
+e.g.~ \cite{DBLP:conf/issre/LeiA05} reported that delta-debugging typically reduced test case sizes for randomly generated unit tests by an average of between 71\% and 93\% (depending on the unit being tested). 
 
 Unfortunately the approach as implemented in QuickCheck has some significant limitations,
-at the root of which is that generation and reduction compose ``in different directions''.
+which work against the goal of providing easy to use combinators for specifying test-case generation.
 
-Data generation naturally has a monadic structure,
-but test-case reduction does not:
+The root of the issue is that while random generation composes easily,
+naive implementations of test-case reduction do not.
+
+Data generation naturally has a monadic structure:
+You can chain generated values together to produce new generated values.
+Test-case reduction when implemented as an explicit reducer function does not have this property.
+
 In order to turn a reducer for one type into a reducer for another,
 you need functions mapping the type in both directions.
 Given a reducer \(\texttt{smaller} :: a \to [a]\) and a function \(a \to b\) (or a function \(b \to a\)) there is no way to produce a non-trivial reducer \(b \to [b]\)---either
@@ -247,7 +294,14 @@ Two approaches have been approached to fix this which would allow the natural mo
 \begin{enumerate}
 \item In SmartCheck\cite{DBLP:conf/haskell/Pike14},
 test-case reduction is fully generic and works for arbitrary algebraic data types.
+QuickCheck offers similar,
+more limited,
+functionality.
 \item In the rose-tree based approach proposed by Reid Draper in~\cite{FreeShrinking},
+rather than generating a single value,
+the library generates a lazy tree of values,
+with each node in the tree labelled by a single value,
+and children corresponding to simpler values.
 \end{enumerate}
 
 \chapter{Goals}
