@@ -34,7 +34,10 @@ or anywhere in between.
 \item A \emph{test case}---some
 inputs that are designed to exercise the system under test.
 \item A \emph{test oracle}---a
-procedure that observes the behaviour of the SUT when executed with the test case and returns pass or fail.
+procedure that observes the behaviour of the SUT when executed with the test case and returns pass or fail\footnote{
+As we will see later, sometimes there is a third possible return value that indicates that the test case is in some way invalid.
+For the purpose of this section we can consider that equivalent to a pass.
+}.
 \end{enumerate}
 
 Often the boundaries between these are blurred.
@@ -74,7 +77,7 @@ is impossible to know whether the software's behaviour is correct unless you kno
 Within some areas such as compiler testing\cite{DBLP:conf/pldi/YangCER11, DBLP:conf/icse/DonaldsonL16},
 the problem domain is both well enough specified and of sufficient research interest that this is not a problem---the
 researchers testing compilers understand the compilers they are testing well enough to write useful oracles---but
-for testing research in general this means having to put in a lot of boring and non-research work to understand the behaviour of the particular SUT.
+for testing research in general this means having to put in a lot of boring and non-research work to understand the behaviour of the particular SUT.\ 
 
 This means that most oracles studied in software testing research fall into one of the following categories:
 
@@ -96,35 +99,27 @@ changes in behaviour of the software are often the point,
 and crashes and deadlocks while frustrating are in some sense the least interesting category of bug because they are so obvious when they happen in production---catching
 wrong behaviour that does \emph{not} lead to a crash is much higher value proposition.
 
-Let me begin with some context.
+In contrast,
+the practitioner approach of just writing down a test oracle programmatically seems to work very well---the
+developers of the software already \emph{know} what it is supposed to do (more or less),
+and are experienced at writing test oracles as part of their own testing.
 
-The focus of my PhD is an open source project I wrote (and that many others now also contribute to) called \emph{Hypothesis}.
-Hypothesis was originally purely a Python library\footnote{\url{https://github.com/HypothesisWorks/hypothesis-python}},
-but now also has a version for Ruby\footnote{\url{https://github.com/HypothesisWorks/hypothesis-ruby}},
-with a Rust backend that will eventually form a common implementation for the two.
-I will blur the distinction and simply refer to them all as ``Hypothesis''.
+Unfortunately,
+this runs into the other fork of the problem---practitioners
+are experienced at writing test oracles,
+but have little experience in writing test case generators.
+They may be willing to acquire the basics,
+but given the relative lack of widespread deployment of even basic test case generation,
+it seems likely that it would require more than simple knowledge is required to improve the situation.
 
-Hypothesis is a library in the spirit of QuickCheck\cite{DBLP:conf/icfp/ClaessenH00} for \emph{property-based testing}.
-The distinguishing feature of such tools is that they make it easy for users to define tests that combine user-written specifications with some form of data generation.
-Such tests assert properties that are intended to hold for an entire class of inputs,
-although in practice only ever test on a finite number of inputs in any given run.
+This is where the QuickCheck\cite{DBLP:conf/icfp/ClaessenH00} family of tools comes in to the picture.
 
-I do not propose to do an extensive review of the existing literature on QuickCheck,
-for two main reasons:
-
-The first is that it would frankly be redundant.
-If you are interested in a detailed survey of QuickCheck and QuickCheck-related tools in the context of Haskell,
-I refer you to Rudy Braquehais's recent PhD thesis\cite{matela2017tools},
-where he ably summarizes it and a wide variety of related tools.
-
-The second is that despite the shared lineage,
-due to differing implementation strategies and contexts,
-Hypothesis actually has comparably little in common with QuickCheck that they do not both share in common with a much broader area of testing research.
-
-QuickCheck nevertheless provides the starting point for many of the \emph{problems} that I will motivate,
-and where relevant I will of course first back to it and its descendants.
-
-A test in QuickCheck looks something like the following:
+QuickCheck is a software testing library,
+originally for Haskell but with a large number of ports to other languages\footnote{
+\url{https://hypothesis.works/articles/quickcheck-in-every-language/} curates a list of what I think are the ones that are actually good enough to be worth using,
+but \url{https://en.wikipedia.org/wiki/QuickCheck} lists many more.
+}.
+A test in QuickCheck looks as follows:
 
 \begin{lstlisting}[language=Haskell]
 import Test.QuickCheck (quickCheck, (==>), Property)
@@ -138,9 +133,69 @@ main = quickCheck prop_remove
 
 In this test we test the property that given a list of integers and an integer,
 with the integer contained in the list,
-after removing the integer from the list it is not longer present.
+after removing the integer from the list it is not longer present (this property is false---the
+remove function only removes the first element if there are duplicates).
 
-A similar property expressed in Hypothesis would be:
+As seeen in this example,
+in the original QuickCheck the test case is specified entirely through its type,
+using Haskell's type class mechanism to turn it into a test case generator.
+In most descendants of QuickCheck instead explicit combinators to allow more fine grained control of the generation.
+Since the recent development of Hedgehog\footnote{\url{https://github.com/hedgehogqa/haskell-hedgehog}},
+this approach is also available in Haskell.
+
+When run, this test randomly generates a number of examples (100 by default).
+If none are rejected by the test oracle (the function provided by the user),
+the test passes.
+If it finds a test case which makes the test oracle fail it then performs test-case reduction\cite{DBLP:conf/issta/HildebrandtZ00, DBLP:conf/pldi/RegehrCCEEY12},
+which attempts to turn the failing example into a simpler and easier to read one,
+and shows the reduced example to the user.
+
+From the point of view of the core questions of testing research---test-case generation and identifying test oracles---QuickCheck
+is a very boring piece of software (and this was mostly true even when it was created).
+QuickCheck uses developer-written test oracles (in the original paper these are framed as ``specifications'',
+but in actual use they are not substantially different from normal tests written by developers\footnote{\url{https://hypothesis.works/articles/incremental-property-based-testing/}}) and simple random generation of test cases.
+While random testing is still a widely used technique in some domains
+(e.g.\ it is still widespread compiler testing),
+and is far more effective than one might suppose\cite{DBLP:journals/tse/HamletT90, DBLP:journals/pacmpl/MajumdarN18},
+it was far from cutting edge even when the paper was published.
+
+This is not intended as a criticism of the paper,
+because the paper was never an attempt to push back the boundaries of testing research,
+but instead to make the existing research more accessible!
+The following quote is from the original QuickCheck paper\cite{DBLP:conf/icfp/ClaessenH00}:
+
+\begin{quote}
+We have taken two relatively old ideas, namely specifications
+as oracles and random testing, and found ways to make
+them easily available to Haskell programmers.
+\end{quote}
+
+This has been wildly successful,
+even ignoring the various descendant libraries:
+QuickCheck has over 1800 open source Haskell packages using it\footnote{\url{http://packdeps.haskellers.com/reverse/QuickCheck}},
+and presumably has significantly more closed source or unpublished packages beyond that number.
+
+Rudy Braquehais's recent PhD thesis\cite{matela2017tools} has an excellent summary of much of the current research on extending QuickCheck in Haskell.
+I do not propose to cover much of this here,
+as it does not have a great deal of overlap with my work---it
+is largely focused on some Haskell specific problems (e.g.\ a lot of it is reliant on the widespread use of algebraic data types) and expanding QuickCheck with capabilities that go beyond testing per se
+(e.g. FitSpec\cite{DBLP:conf/haskell/BraquehaisR16} expands QuickCheck with a form of mutation testing\cite{DBLP:journals/tse/JiaH11} to identify ``missing'' properties).
+Where specific papers are relevant,
+I will mention them in the appropriate context.
+
+Instead of QuickCheck in its own right,
+the focus of my PhD is an open source project I wrote (and that many others now also contribute to) called \emph{Hypothesis}.
+Hypothesis was originally purely a Python library\footnote{\url{https://github.com/HypothesisWorks/hypothesis-python}},
+but now also has a version for Ruby\footnote{\url{https://github.com/HypothesisWorks/hypothesis-ruby}},
+with a Rust backend that will eventually form a common implementation for the two.
+I will blur the distinction and simply refer to them all as ``Hypothesis''.
+
+Hypothesis was originally a QuickCheck port,
+but has mostly moved beyond that---it
+shares its goals and has a roughly similar API,
+but has a very different implementation.
+
+A similar property to the above expressed in Hypothesis would be:
 
 \begin{lstlisting}[language=Python]
 from hypothesis import given, assume
@@ -154,52 +209,11 @@ def test_deleting(ls, i):
     assert i not in ls
 \end{lstlisting}
 
-When run, these tests both do the same thing:
-They randomly generate a list of integers and an integer,
-if the integer is contained in the list they continue the test,
-otherwise they mark it as invalid.
-Once they have found a sufficient number of valid test cases that did not fail (100 by default) the test stops.
-If prior to that point they have found a counter-example to the property,
-they begin a process of test-case reduction to attempt to produce a smaller, simpler, example.
-
-QuickCheck and its descendants,
-including Hypothesis,
-are essentially just libraries designed to make it easier to write tests that do this,
-by providing some test running infrastructure and a library of combinators\footnote{
-In the original Haskell QuickCheck these are typically expressed using type classes rather than explicit combinators,
-but the Erlang version written by the same authors uses combinators,
-as do many other ports.
-Recently Hedgehog\footnote{\url{https://en.wikipedia.org/wiki/QuickCheck}} has introduced the combinator style in Haskell as well.
-}
-for specifying how to generate test cases.
-
-From a research point of view,
-this is an extremely boring idea,
-and the QuickCheck authors knew that when they proposed it.
-The following quote is from~\cite{DBLP:conf/icfp/ClaessenH00}:
-
-\begin{quote}
-We have taken two relatively old ideas, namely specifications
-as oracles and random testing, and found ways to make
-them easily available to Haskell programmers.
-\end{quote}
-
-QuickCheck was never an attempt to push back the boundaries of testing research,
-but instead a paper about tool usability.
-The fundamental question posed by the paper is not ``can we test software better than we are currently doing?'',
-but ``how do we get non-researchers to use better testing techniques?''.
-
-QuickCheck's answer to this question has proven fairly popular.
-Most programming languages have a library inspired by it (often several)\footnote{\url{https://en.wikipedia.org/wiki/QuickCheck}},
-and many of these libraries are widely used.
-\href{http://libraries.io}{libraries.io} currently (as checked on 2018--04--29) lists 132 open source repositories using QuickCheck\footnote{\url{https://libraries.io/hackage/QuickCheck/usage}} and 532 using Hypothesis\footnote{\url{https://libraries.io/pypi/hypothesis/usage}}.
-Other popular implementations that libraries.io did not seem to have good data for include test.check\footnote{\url{https://github.com/clojure/test.check/}} for Clojure and ScalaCheck\footnote{\url{http://www.scalacheck.org/}} for Scala.
-
 I am currently focused on answering two follow-on questions:
 
 \begin{itemize}
 \item Given that usability is the main raison d'être of QuickCheck style testing,
-how can we improve that further?
+how can we improve that further to get wider spread adoption of these techniques?
 \item Can we extend this sort of tooling with more advanced techniques than random testing,
 without requiring users to understand or even be aware of those techniques?
 \end{itemize}
