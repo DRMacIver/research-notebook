@@ -9,12 +9,92 @@
 
 \tableofcontents
 
-\chapter{Introduction}\label{chap:introduction}
+\chapter{Background}\label{chap:introduction}
 
-NB:\ This literature review is very much a work in progress and is not really ready for public consumption.
-It is and will be highly fragmented,
-with large missing gaps and much of the bits that are here only in a temporary state that will later be reworked into other things.
-Proceed with caution.
+My work is concerned with the process of \emph{testing} software.
+Testing consists of a series of tests,
+each of which typically returns pass or fail,
+with a fail indicating some defect in the software (or in the testing process)\footnote{
+This terminology and usage is in fact somewhat controversial,
+and the software testing/QA community of practitioners would often refer to this as \emph{checking},
+and the individual steps as \emph{checks}.
+James Bach presents an enlightening article discussing these terms at \url{http://www.satisfice.com/blog/archives/856}.
+However,
+the use of the term ``test'' is significantly more common in the research community,
+and I will use this terminology.
+}.
+
+A \emph{test} can be broken up into three parts:
+
+\begin{enumerate}
+\item A \emph{system under test} (SUT)---some software that the testing process is targetting.
+This might be an entire application (or indeed multiple interacting applications),
+or it might be a single function,
+or anywhere in between.
+\item A \emph{test case}---some
+inputs that are designed to exercise the system under test.
+\item A \emph{test oracle}---a
+procedure that observes the behaviour of the SUT when executed with the test case and returns pass or fail.
+\end{enumerate}
+
+Often the boundaries between these are blurred.
+e.g.\ the distinction between test case and oracle is not always obvious in tests,
+and with e.g.\ the introduction of mocking or mutation testing even the boundary between SUT and test case is not always clear.
+Nevertheless the logical distinction between the three parts is useful.
+
+Usually the SUT is fixed---we are interested in testing a particular piece of software,
+not all the software in the world---with
+maybe some freedom to select subsets of it (e.g.\ picking a particular function in a larger application to test).
+The problem of how to test software then becomes the selection of suitable test cases and test oracles.
+
+Typically software practitioners use a mostly manual process for selectng test cases and oracles---in
+fully manual testing,
+both the test case and the oracle are literally a ``human in the loop'' using the software,
+but even with most automated testing the oracle and test case are written by hand by a developer of the software.
+Executing the test case is then automated and repeatble, usually with some test runner such as JUnit\footnote{\url{https://junit.org/junit5/}} or pytest\footnote{\url{https://pytest.org/}},
+but a human had to write it at some point.
+
+However both the process of test-case generation and oracle discovery can be partially automated.
+The following two articles are excellent surveys of the current research on doing so:
+
+\begin{itemize}
+\item ``The Oracle Problem in Software Testing: {A} Survey''\cite{DBLP:journals/tse/BarrHMSY15}
+\item ``An orchestrated survey of methodologies for automated software test case generation''\cite{DBLP:journals/jss/AnandBCCCGHHMOE13}
+\end{itemize}
+
+I won't attempt to summarize the research on test case generation here,
+as my focus is on a fairly specific approach within that,
+but can recommend the survey paper for a broader picture.
+
+From a research point of view,
+the problem of test case generation is much more interesting and as such more well studied.
+The oracle problem (i.e.\ finding a suitable test oracle) is in some sense impossible to solve in generality---it
+is impossible to know whether the software's behaviour is correct unless you know what it is that the software is actually supposed to \emph{do}.
+
+Within some areas such as compiler testing\cite{DBLP:conf/pldi/YangCER11, DBLP:conf/icse/DonaldsonL16},
+the problem domain is both well enough specified and of sufficient research interest that this is not a problem---the
+researchers testing compilers understand the compilers they are testing well enough to write useful oracles---but
+for testing research in general this means having to put in a lot of boring and non-research work to understand the behaviour of the particular SUT.
+
+This means that most oracles studied in software testing research fall into one of the following categories:
+
+\begin{itemize}
+\item They derive a test oracle (either automatically or manually) from some specification of the behaviour of the software.
+\item They use test oracles that only look for behaviour that is \emph{obviously wrong}.
+e.g.\ segfaults, assertion failures, and deadlocks.
+\item They use multiple implementations of the same specification to do differential testing---comparing
+the implementations and seeing if they produce the same answer.
+\item They attempt to derive the oracle from the current behaviour of the SUT,
+effectively producing a regression test suite---this
+can't determine whether the current behaviour is correct,
+but allows you to determine when it changes.
+\end{itemize}
+
+All of these are of somewhat limited applicability in practice---most
+software as developed has no formal specification or alternate implementation,
+changes in behaviour of the software are often the point,
+and crashes and deadlocks while frustrating are in some sense the least interesting category of bug because they are so obvious when they happen in production---catching
+wrong behaviour that does \emph{not} lead to a crash is much higher value proposition.
 
 Let me begin with some context.
 
@@ -120,9 +200,8 @@ I am currently focused on answering two follow-on questions:
 \begin{itemize}
 \item Given that usability is the main raison d'être of QuickCheck style testing,
 how can we improve that further?
-\item Can we extend this sort of tooling beyond random testing which,
-while surprisingly effective in practice,
-ultimately limits the effectiveness of the resulting tests for more intensive testing?
+\item Can we extend this sort of tooling with more advanced techniques than random testing,
+without requiring users to understand or even be aware of those techniques?
 \end{itemize}
 
 Although the first question seems more a matter of engineering than research,
@@ -195,13 +274,6 @@ can take their existing knowledge of how to test their software to write test or
 while using QuickCheck to simplify the process of test-case generation,
 which is less their area of expertise.
 
-\chapter{Test Case Generation}\label{chap:generation}
-
-Test-case generation is,
-unsurprisingly,
-the process of producing a test case,
-typically for some specific system under test and test oracle for it.
-
 \chapter{Operations on Test Cases}
 
 As discussed in Chapters~\ref{chap:introduction} and~\ref{chap:generation},
@@ -226,7 +298,16 @@ However this many violate abstraction boundaries---if
 e.g.\ a data type is designed to represent a collection of values as a balanced binary tree,
 manipulating its tree structure in a way that is unaware of that will produce an instance of the type that could never have been produced via its public API.\ 
 
+\section{Generation}
 
+Test-case generation is,
+unsurprisingly,
+the process of producing a test case for some specific system under test and test oracle for it.
+
+Typically this starts from some description of what the range of test cases should be.
+In the context of QuickCheck and similar tools,
+this is specified programmatically,
+but in other
 
 \section{Test-Case Reduction}\label{sec:shrinking}
 
