@@ -312,3 +312,61 @@ We can simply enumerate \(U\) and walk the automaton,
 noting which states appear there,
 and extract the subset of the automaton that contains only those states.
 
+
+\section{Applications}
+
+Here are some things I want to apply L* to.
+
+\subsection{Generation}
+
+It's ``easy'' to do generation from a language you have a DFA for---just
+build a Boltzmann Sampler (Chapter \ref{label:boltzmann}) for it.
+
+Thus if we can use L* to learn a language for a predicate,
+we can build a generator that satisfies that predicate:
+Build the DFA,
+build a Boltzmann sampler for it,
+run that Boltzmann sampler.
+If the Boltzmann sampler returns a value that does *not* satisfy the predicate,
+give that as a counter-example to L*,
+rebuild the Boltzmann sampler,
+and try again.
+
+I think the big problem with this idea is that (after some initial corpus) it only corrects the L* best-guess with examples in one direction.
+If the DFA predicts things satisfy the predicate and is wrong with high probability,
+that will get corrected,
+but you never learn about what it's missing.
+
+One possibility would be that once you've converged on no false negatives,
+invert the DFA to get the complement of the language
+(maybe in the Hypothesis case go stronger and take the DFA for the language of strings that are not a prefix of any string in the language),
+and build a Boltzmann sampler for that complement,
+then run that repeatedly until you get the error bound low enough.
+
+\subsection{Shrinking}
+
+I have this persistent idea that L* should allow for really high quality shrinking of strings.
+
+The idea is this:
+
+\begin{enumerate}
+\item Build an L* model of the predicate you want to shrink
+\item Use breadth first search on the resulting DFA to find a shortlex minimal element of the language.
+\item If necessary (I'm not sure it actually ever is),
+check if the resulting string satisfies the predicate,
+and if not treat it as a counter-example to rebuild your L* model and go back to the start.
+\end{enumerate}
+
+When I've tried this before it's been too slow to really make it work,
+but that was before I had some of the above ideas for improving L*.
+
+I think this probably works better in tandem with another shrinker:
+First find the L* minimum,
+then run the other shrinker,
+and every time you find a successful shrink you add it to your L* model.
+Alternating the two then allows you to escape the limitations of each (maybe).
+
+You could also run generation on the learned language as above to try to get a better picture of the language space,
+and maybe move past local minimum.
+If you could generate interesting strings of minimal size,
+maybe one of them would let you move past a local optimum?
