@@ -12,7 +12,7 @@ if ! venv/bin/python scripts/reflist.py ; then
     echo -ne '\007'
 fi
 
-FILES="notes.tex literature.tex"
+FILES="notes.tex report.tex"
 
 for f in $FILES; do
   if ! rubber -d "$f" ; then
