@@ -1,0 +1,146 @@
+\chapter{Some Theory of Test-Case Reduction}
+
+This chapter is mostly for annoyingly pedantic theory of test-case reduction that nobody except me cares about.
+
+\newcommand{\exemplars}[1]{\mathcal{E}(#1)}
+
+Let \(T\) be some non-empty set.
+Define \(\exemplars{T} = \{ (U, x) : U \in \pow(T), x \in U \}\).
+
+\begin{definition}
+A test-case reducer is a function \(r: \exemplars{T} \to T\) such that \(r(U, x) \in U\) and \(r(U, r(U, x)) = r(U, x)\)
+\end{definition}
+
+\begin{definition}
+A test-case reducer \(r\) normalizes \(U \in \pow(T)\) if for all \(x, y \in U\), \(r(U, x) = r(U, y)\).
+If \(r\) normalizes all \(U \in \pow(T)\) is is said to be normalizing.
+\end{definition}
+
+
+\newcommand{\preckap}{\stackrel{\kappa}{\prec}}
+
+\begin{definition}
+Let \(\kappa: A \to \pow(A)\).
+Define \(x \preckap y\) if \(x \in \kappa(y)\).
+
+A reducer \(r\) is \(\kappa\)-minimizing if \(\kappa(r(U, x))\) is always an \(\preckap\)-minimal element of \(U\).
+It is \(\kappa\)-local if it is \(\kappa\)-minimizing and for any \(x \in U\) there is some sequence \(r(U, x) = s_0 \preckap s_1 \preckap \ldots \preckap s_n = x)\) with \(s_{i + 1} \in U \cap \kappa(s_i)\).
+\end{definition}
+
+Most generalised delta-debugging is \(\kappa\)-minimizing for some \(\kappa\),
+and most greedy implementations are \(\kappa\)-local.
+
+\begin{proposition}
+There exists a \(\kappa\)-minimizing reducer if and only if \(\preckap\) is well-founded.
+\end{proposition}
+
+\begin{proof}
+If \(U \subseteq T\) is non-empty and \(r\) is a \(\kappa\)-minimizing reducer,
+then \(r(U, x)\) for any \(x \in U\) is a \(\preckap\)-minimal element of \(U\),
+hence \(\preckap\) is well-founded.
+
+Suppose \(\preckap\) is well-founded,
+then an \(r\) which just picks any \(\preckap\)-minimal element of \(U\) is a \(\kappa\)-minimizing reducer.
+\end{proof}
+
+\begin{lemma}
+A well-founded relation is antisymmetric and irreflexive.
+\end{lemma}
+
+\begin{proof}
+If we have \(x \prec x\) then \(\{x\}\) has no \(\prec\)-minimal element,
+so \(\prec\) is irreflexive.
+
+Consider \(x \neq y\).
+\(\prec\) is total,
+so without loss of generality assume \(x \prec y\).
+If \(y \prec x\),
+then \(\{x, y\}\) has no minimal element,
+contradicting well-foundedness.
+Hence \(\prec\) is antisymmetric.
+\end{proof}
+
+\begin{lemma}
+Let \(\prec\) be a well-founded total relation,
+then \(\prec\) is a strict well order.
+\end{lemma}
+
+\begin{proof}
+If \(x \prec y\),
+\(y \prec x\)
+and \(y \prec z\) then \(\{x, y, z\}\) has no minimal element.
+Therefore \(z \not\prec x\),
+and so by totality we must have \(x \prec z\).
+Hence \(\prec\) is transitive.
+
+We already know \(\prec\) is well-founded and total by assumption,
+so by the previous lemma it is also antisymmetric and irreflexive,
+hence it is a strict well order.
+\end{proof}
+
+\begin{theorem}
+A \(\kappa\)-local reducer is normalizing if and only if \(\preckap\) is a strict well order.
+
+In this case there exists a unique \(\kappa\)-local reducer defined by \(r(U, x) = \min\limits_{\preckap} U\).
+\end{theorem}
+
+\begin{proof}
+Let \(r\) be a normalizing \(\kappa\)-local reducer.
+
+Suppose \(x \neq y\).
+Then by the fact that \(r\) is normalizing,
+we must have \(r(\{x, y\}, x) = r(\{x, y\}, y)\).
+Suppose without loss of generality that \(r(\{x, y\}, y) = x\).
+Then because \(r\) is \(\kappa\)-local we must have \(x \preckap y\).
+Hence \(\preckap\) is total.
+Thus by the preceding lemma it is a strict total order.
+
+The uniqueness comes from the fact that a total order can only have a single minimal element in a set,
+so necessarily we have \(r(U, x) = \min\limits_{\preckap} U\).
+The existence comes from the fact that \(r\) defined thus is a \(\kappa\)-local reducer.
+\end{proof}
+
+Another interesting way to force this condition is the following.
+
+\begin{definition}
+A reducer \(r\) is constraint consistent if \(r(U, x) = r(U', x)\) for any \(U'\) with \(\{x, r(U, x)\} \subseteq U' \subseteq U\).
+\end{definition}
+
+\begin{theorem}
+If \(r\) is constraint-consistent then there exists a unique \(\kappa\) such that \(r\) is \(\kappa\)-local,
+and \(\preckap\) is a strict partial order.
+\end{theorem}
+
+\begin{proof}
+Define \(\kappa(x) = \{y \neq x: r(\{x, y\}, x) = y\}\).
+
+\(\preckap\) is anti-symmetric,
+as if \(r(\{x, y\}, y) = x\) then (because \(r\) is a reducer),
+\(r(\{x, y\}, x) = x \neq y\).
+
+Taking \(U' = \{r(U, x), x\} \subseteq U\),
+by constraint-consistency we must have \(r(U', x) = r(U, x)\),
+hence \(r(U, x) \in \kappa(x)\) for all \(x \in U\).
+
+Suppose \(y \in U \cap \kappa(r(U, x))\).
+Then \(r(U, x) = r(U, r(U, x)) = r(\{r(U, x), y\}, r(U, x)) = y\),
+which contradicts the fact that \(x \not \kappa(x)\).
+Thus \(r(U, x)\) is \(\kappa\)-minimal,
+and \(r\) is \(\kappa\)-minimizing.
+The sequence condition is immediate from \(r(U, x) \in \kappa(x)\),
+so \(r\) is \(\kappa\)-local.
+
+We now need to show that \(\preckap\) is a strict partial order.
+This just requires showing transitivity.
+Let \(x \preckap y\) and \(y \preckap z\).
+Let \(U = \{x, y, z\}\).
+Then \(r(U, z) = x\), because \(x\) is the only \(\kappa\)-minimal elemnt of \(U\).
+By constraint-consistency,
+\(r(\{x, z\}, z) = x\),
+hence \(x \preckap z\) as desired.
+\end{proof}
+
+In practice what all of these results mean is that getting consistent behaviour out of test case reducers is bloody hard---normalization
+requires bounded exhaustive enumeration,
+and even constraint consistency requires enumerating the transitive closure of your smallest relationship.
+e.g. a constraint consistent attempt to do one-minimality would actually have to enumerate every subset.
