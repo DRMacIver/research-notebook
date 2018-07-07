@@ -2,6 +2,8 @@
 
 This chapter is mostly for annoyingly pedantic theory of test-case reduction that nobody except me cares about.
 
+\section{Test-Case Reduction and Orderings}
+
 \newcommand{\exemplars}[1]{\mathcal{E}(#1)}
 
 Let \(T\) be some non-empty set.
@@ -144,3 +146,41 @@ In practice what all of these results mean is that getting consistent behaviour 
 requires bounded exhaustive enumeration,
 and even constraint consistency requires enumerating the transitive closure of your smallest relationship.
 e.g. a constraint consistent attempt to do one-minimality would actually have to enumerate every subset.
+
+\section{What are we trying to reduce?}
+
+Test-case reduction is generally trying to reduce some notion of ``size'',
+but it's unclear what that means---often there is not a single unambiguous notion of size.
+For example,
+consider a list of strings.
+Is the list [``aaa''] smaller than the list [``a'', ``a'']?
+The former has fewer elements in the top level list,
+the latter fewer total characters.
+
+It is tempting to suggest that something along the lines of size when printed would work well as a metric here.
+Unfortunately this runs counter to what most test-case reduction in property-based test libraries do in at least one particular case:
+Typically when reducing booleans,
+we prefer ``False'' to ``True'',
+but False has strictly more characters than True,
+so this is an increase in printed size!
+Or,
+for example,
+the floating point number 1e16 has a very compact printable representation,
+but a reducer might (quite reasonably) replace it with the smaller floating point number 5000000000000000.0 whose printed representation is quite large in comparison.
+
+In Hypothesis we are trying to reduce in the shortlex order,
+and for Hypothesis's use case this is a pretty reasonable thing to do,
+but in general it may not be.
+In \cite{chen_et_al:DR:2018:8676} we discussed a bit that what we're trying to optimise for is readability,
+but that's an almost impossible goal.
+
+Possible candidates:
+
+\begin{itemize}
+\item Minimizing runtime
+\item Minimizing coverage
+\item Maximizing homogoneity
+\end{itemize}
+
+I do believe that having some sort of total ordering independent of the SUT is probably the way to go.
+The previous section kinda justifies that but not really.
