@@ -27,3 +27,24 @@ I'm not sure the process was enlightening enough to be worth it.
 Where the conversion of the infinite sum to the limit works because for every \(n \geq m\) the positive term in the summand cancels the negative term from the summand for \(n - m\),
 and the final limit is calculated because \(0 \leq \sum\limits_{n = k}^{m + k} \frac{1}{n + m} \leq \frac{m}{n}\).
 \end{proof}
+
+The following comes up in~\cite{1410.5002}:
+
+\begin{proposition}
+Let \(H(n) = \sum\limits_{k=1}^n \frac{1}{k}\) be the nth harmonic number.
+Then \(\sum\limits_{n=1}^\infty H(n) x^n = -\frac{\log(1 - x)}{1 - x}\).
+\end{proposition}
+
+\begin{proof}
+\begin{align*}
+\sum\limits_{n=1}^\infty H(n) x^n & = \sum\limits_{n=1}^\infty \sum\limits_{k=1}^n \frac{1}{k} x^n \\
+& = \sum\limits_{k=1}^\infty \frac{1}{k} \sum\limits_{n=k}^\infty x^n \\
+& = \sum\limits_{k=1}^\infty \frac{1}{k} x^k \sum\limits_{n=0}^\infty x^n \\
+& = \frac{1}{1 - x} \sum\limits_{k=1}^\infty \frac{1}{k} x^k \\
+& = \frac{1}{1 - x} \sum\limits_{k=1}^\infty \int\limits_0^x t^{k - 1} dt \\
+& = \frac{1}{1 - x} \int\limits_0^x  \sum\limits_{k=1}^\infty t^{k - 1} dt \\
+& = \frac{1}{1 - x} \int\limits_0^x \frac{1}{1 - t} dt \\
+& = - \frac{\log(1 - x)}{1 - x} \\
+\end{align*}
+\end{proof}
+
