@@ -1,0 +1,65 @@
+\chapter{Statistics}
+
+\section{Estimating Entropy}
+
+For a paper I'm working on I'm interested in the problem of how to estimate the entropy of a distribution.
+This appears to be a hard problem.
+
+\cite{DBLP:journals/neco/Paninski03} showed that there is no unbiased non-parametric estimator for the entropy of a discrete distribution.
+The proof is straightforward and cute.
+
+\begin{theorem}
+Let \(T\) be a multinomial distribution taking values in \(A\).
+For a fixed sample size \(N\) there is no unbiased estimator of \(h(T)\).
+\end{theorem}
+
+\begin{proof}
+Such an estimator would be defined by a function \(q: A^N \to \mathbb{R}\).
+Let \(S = (T_1, \ldots, T_N)\) be our sample distribution.
+Then \(E(q(S)) = \sum\limits{s \in A^N} q(s) P(S = s)\).
+But \(P(S = s)\) is a polynomial in \(A^N\), so \(E(q(S))\) is a polynomial function of the distribution of \(T\).
+
+But the entropy is a transcendental function,
+so cannot be equal to \(E(q(S))\) everywhere.
+\end{proof}
+
+Nevertheless, 
+\cite{1410.5002} demonstrates a neat unbiased estimator for entropy!
+The trick is that instead of having a fixed sample size we have an unknown,
+possibly unbounded, sample size.
+
+\begin{theorem}
+Let \(X\) be some discrete random variable and let \(H(n)\) be the nth harmonic number.
+Consider a sequence of IID \(X_1, \ldots, X_n, \ldots\).
+Define \(U = \min\limits_{n > 1} X_n = X_1\).
+Then \(E(H(U - 1)) = h(X)\),
+the entropy of \(X\).
+\end{theorem}
+
+\begin{proof}
+Let \(X\) take values \(a_i\) and \(P(X = x_i) = p_i\).
+
+Conditioning on \(X_1 = a_i\),
+the probability of taking \(n\) more draws to draw \(i\) again is \((1 - p_i)^{n - 1} p_i\),
+i.e. it's a geometric distribution.
+Thus \(E(H(U) | X_1 = a_i) = p_i \sum H(n - 1) (1 - p_i)^{n - 1}\).
+By Proposition~\ref{prop:sumofharmonicpowers},
+this sum is \(-\log p_i\).
+Taking the expectation of these conditional expectations,
+we get the entropy as desired.
+
+\end{proof}
+
+This particular estimator isn't terribly practical,
+but they suggest averaging a sequence of them.
+If you define \(U_j = \min\limits_{k \geq 1} X_j = X_{j + k}\),
+then \(\sum\limits_{i = 1}^n H(U_i - 1)\) is similarly an unbiased estimator,
+but with lower variance.
+
+Interesting links:
+
+\begin{itemize}
+\item \href{http://thirdorderscientist.org/homoclinic-orbit/2013/7/23/analyzing-and-bootstrapping-our-way-to-a-better-entropy-estimator-mdash-part-ii-computational}{Analyzing and Bootstrapping our Way to a Better Entropy Estimator}.
+\item \href{https://math.stackexchange.com/questions/604654/estimating-the-entropy}{Good stack exchange discussion on this}
+\item \href{https://memming.wordpress.com/2014/02/09/a-guide-to-discrete-entropy-estimators/}{A guide to discrete entropy estimators}
+\end{itemize}
