@@ -1,0 +1,165 @@
+\chapter{Misc Formal Language Theory}
+
+\section{Regular Relationships}
+
+Note: this sections somewhat under construction.
+There's an intuitive notion I'm trying to capture that I haven't quite got to yet,
+do do with test-case reduction and notions of non-deterministic transformations between unknown formal languages,
+but I haven't got there yet.
+
+These ideas \emph{must} correspond to something well known,
+but if so I haven't been able to find it.
+
+\begin{definition}
+Let \(A\) be some alphabet. The set of regular relationships on \(A^*\) is the smallest set \(\mathcal{G} \subseteq (A^*)^2\) such that:
+
+\begin{itemize}
+\item \(\emptyset \in \mathcal{G}\)
+\item \( (A^*)^2 \in \mathcal{G}\)
+\item \(\{(x, y): x = y\} \in \mathcal{G}\)
+\item \(\{(x, y): y \in A^*\}\) for each \(x \in A^*\).
+\end{itemize}
+
+Which is closed under the following operations:
+
+\begin{itemize}
+\item \(R \to R^c\)
+\item \(R \to \{(v, u): (u, v) \in R\)
+\item \(R_1, R_2 \to R_1 \cap R_2\)
+\item \(R_1, R_2 \to \{(ru, sv) (r, s) \in R_1, (u, v) \in R_2\}\)
+\item \(R_1, R_2 \to \{(u, v): \exists s, (u, s) \in R_1 \wedge (s, v) \in R_2 \} \)
+\item \(R \to R^+ = \{(u, v_1 \ldots v_n) (u, v_i) \in R\}\)
+\end{itemize}
+
+\end{definition}
+
+\begin{conjecture}
+If \(R\) is a regular relationship and \(L\) is a regular language,
+then \(\{u: \exists v \in L, (u, v) \in R\}\) is also a regular language.
+\end{conjecture}
+
+\begin{proof}
+TODO: This should just be a matter of checking closure under the operations.
+\end{proof}
+
+Note that if this conjecture is true then the transitive closure of a regular relationship need not be regular.
+Let \(A = \{0, 1\}\).
+The relationship \(y = u01v\) and \(x = uv\) for some \(u, v\) is easily seen to be regular.
+However when \(x = \epsilon\),
+the set of suitable \(y\) is a bracket balancing language,
+which is a classic example of a context free but not regular language.
+
+This definition isn't super easy to work with (and is possibly not quite right),
+so here's another definition:
+
+\begin{definition}
+Let \(A\) be some alphabet and let \(\phi \not\in A\).
+Let \(C = (A \cup \{\phi\})^2 - \{(\phi, \phi)\}\).
+
+A relationship \(\sim \subseteq (A^*)^2\) is \emph{jump-regular} if there is some regular language \(\mathcal{L} \subseteq C^*\) such that \(x \sim y\) if and only if \(\mathcal{L} \cap \mathcal{J}(x, y) \neq \emptyset\),
+where \(\mathcal{J}(x, y)\) is the \emph{jump language} of \(x\) and \(y\) defined as:
+
+\begin{enumerate}
+\item \(\mathcal{J}(x, \epsilon) = [(x_i, \phi) | i]\)
+\item \(\mathcal{J}(\epsilon, y) = [(\phi, y_i) | i]\)
+\item \(\mathcal{J}(au, bv) = \mathcal{J}(u, v) \cup \mathcal{J}(au, v) \cup \mathcal{J}(u, bv)\)
+\end{enumerate}
+
+i.e. the jump language is the language defined by an automaton that at each stage consumes at least one character from each of its arguments,
+and any character that does not come from its arguments is \(\phi\), the jump character,
+which accepts all walks which consume both strings fully.
+
+\end{definition}
+
+
+\begin{conjecture}
+Every jump-regular language is regular.
+\end{conjecture}
+
+It is unclear to me that jump-regular predicates are closed under the boolean operations,
+so I'm not sure if there are regular but non jump-regular relationships.
+
+There's a particularly easy class of jump-regular relationships:
+
+\begin{definition}
+For \(x, y \in A^*\), define the zip of \(x\) and \(y\) as \(\zeta(x, y) = [(\iota(x, i), \iota(y, i)) | 0 \leq i < \min(|x|, |y|)]\).
+i.e. we \(\phi\)-extend the shorter list so that the two are of the same length and then pair up all characters at the same index.
+\end{definition}
+
+\begin{lemma}
+If \(\sim\)
+is equivalent to
+\(\zeta(x, y) \in \mathcal{L}\)
+for some regular language \(\mathcal{L}\),
+then \(\sim\) is regular. 
+\end{lemma}
+
+\begin{proof}
+Let \(Z = (A^2)^* (A \times \{\phi\} \cup \{\phi\} \times A)^*\).
+Then \(t \in Z\) if and only if \(t = \zeta(x, y)\) for some \(x, y\),
+and \(Z\) is clearly regular.
+
+Further, clearly \(\zeta(x, y) \in \mathcal{J}(x, y)\).
+
+Thus \(\mathcal{L}' = \mathcal{L} \cap Z\) is a regular language such that \(x \sim y\) if and only if \(\mathcal{J}(x, y) \cap \mathcal{L}' \neq \emptyset\),
+so \(\mathcal{\sim}\) is regular as desired.
+
+\end{proof}
+
+\begin{proposition}
+The relationship \(|x| < |y|\) is regular.
+\end{proposition}
+
+\begin{proof}
+It corresponds to \(\zeta(x, y) \in C^* (\phi, \cdot)\).
+\end{proof}
+
+\begin{corollary}
+The relationship \(|x| = |y|\) is regular.
+\end{corollary}
+
+\begin{proof}
+\(|x| = |y| \iff \neg (|x| < |y| \vee |y| < |x|)\).
+
+(this is also easy to prove directly).
+\end{proof}
+
+\begin{proposition}
+The relationship \(x \leq y\) lexicographically is regular.
+\end{proposition}
+
+\begin{proof}
+It's easy enough to draw a three-state DFA for this:
+
+\begin{enumerate}
+\item Initial state. Accepting. For \((x, y) | x = y\), transitions to self.
+For \((x, \phi)\), transition to state \(3\). For \((\phi, x)\) transition to state 2.
+For \(x < y\), transition to \(2\). For \(x > y\), transition to 3.
+\item Accepting state, unconditionally transitions back to itself.
+\item Non-accepting state, unconditionally transitions back to itself.
+\end{enumerate}
+\end{proof}
+
+
+\begin{theorem}
+If \(\sim\) is a jump-regular relationship then and \(L \subseteq A^*\) is a regular language then \(\{x: \exists y \in L, x \sim y\}\) is regular.
+\end{theorem}
+
+\begin{proof}
+Let \(X\) be an NDFA for \(\sim\) and \(Y\) and NDFA for \(L\).
+For convenience assume neither has \(\epsilon\)-transitions.
+
+Build an NDFA on \(S_X \times S_X\) as follows:
+The starting point is \((x_0, y_0)\) and a state is accepting if and only if both components are.
+
+\begin{enumerate}
+\item For each \(s \in S_X\) and \(a \in A\), add an \(\epsilon\)-transition from \((s, t)\) to \((\delta_X(s, (\phi, a)), \delta_Y(t, a))\)
+\item For each \(s \in S_X\) and \(a \in A\), add an \(a\)-transition from \((s, t)\) to \((\delta_X(s, (a, \phi)), t)\)
+\item For each \(s \in S_X\) and \(a, b \in A\), add an \(a\)-transition from \((s, t)\) to \((\delta_X(s, (a, b)), \delta_Y(t, b))\)
+\end{enumerate}
+
+Accepting paths through this state machine should correspond precisely to members of the jump language for some \(y \in L\).
+
+TODO: Check details.
+\end{proof}
+
